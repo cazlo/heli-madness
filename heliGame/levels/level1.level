@@ -1,0 +1,13 @@
+//comment
+//NAME: Level 1
+
+heliInitial(20,440);//initial x,y coordinate of heli
+//make sure x points and y points have the same amount of elements
+groundX(0,70,500,800,1000,1500,1700,2100,2200,2400,2650,3000,3001,10000);//x points for ground
+groundY(500,500,550,600,500,420,350,390,370,460,500,500,500,0);//y points for ground
+tree(200,370);//x,y location of tree
+tree(832,433);
+tree(1147,340);
+Ring(1147,200)//x,y location of ring
+Ring(1500,50)
+
