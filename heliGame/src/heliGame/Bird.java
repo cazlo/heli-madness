@@ -6,7 +6,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.Random;
 
-import javax.swing.ImageIcon;
+//import javax.swing.ImageIcon;
 
 public class Bird extends Sprite {
 	//---------constants-----------
