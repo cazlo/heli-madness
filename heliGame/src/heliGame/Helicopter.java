@@ -66,7 +66,7 @@ public class Helicopter extends Sprite{
 	//--------------------------------the animated images------------------------------
 	AnimationUtils facingRightAnim, facingLeftAnim, turningRightToLeft, turningLeftToRight;//, hoverAnim;
 	private static final int [] rightImageNumbers = {1,2,3};
-	private static final int [] leftImageNumbers = {1,2};
+	private static final int [] leftImageNumbers = {1,2,3};
 	//private static final int [] hoverImageNumbers = {1,2,3};
 	private static final int [] turningR2LNumbers = {1,2,3};
 	private static final int [] turningL2RNumbers = {3,2,1};
