@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.*;
 
-public class ImageUtils {
+public class AnimationUtils {
 	static enum LoopTypes{
 		PLAY_ONCE, LOOP_FOREVER
 	}
@@ -18,7 +18,12 @@ public class ImageUtils {
 	private int updatesSinceAnimation;
 	private boolean animationDone;
 	
-	ImageUtils(int numFramesIn, String baseFileName,int [] fileNumbers, String fileExtension, int animationDelayIn, LoopTypes loopTypeIn){
+	AnimationUtils(int numFramesIn,
+                       String baseFileName,
+                       int [] fileNumbers,
+                       String fileExtension,
+                       int animationDelayIn,
+                       LoopTypes loopTypeIn){
 		this.numFrames = numFramesIn;
 		this.currentFrameNum = 0;
 		this.animationDelay = animationDelayIn;
@@ -29,7 +34,9 @@ public class ImageUtils {
 	}
 	
 	//---------------tools to load images-----------------
-	private void loadImageFrames(String baseFileName, int [] fileNumbers, String fileExtension){
+	private void loadImageFrames(String baseFileName,
+                                     int [] fileNumbers,
+                                     String fileExtension){
 		imageFrames = new BufferedImage[this.numFrames];
 		for (int currentImage = 0; currentImage < this.numFrames; currentImage++){
 			imageFrames[currentImage] = loadImage(baseFileName + fileNumbers[currentImage] + fileExtension);
@@ -48,7 +55,7 @@ public class ImageUtils {
 		return image;
 	}
 	
-	//load an image statically (called by ImageUtils.staticLoadImage(filename)
+	//load an image statically (called by AnimationUtils.staticLoadImage(filename)
 	public static BufferedImage staticLoadImage(String fileName){
 		BufferedImage image = null;
 		try {

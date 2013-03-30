@@ -1,6 +1,6 @@
 package heliGame;
 
-import heliGame.ImageUtils.LoopTypes;
+import heliGame.AnimationUtils.LoopTypes;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -14,7 +14,7 @@ public class Explosion extends Sprite {
 	private static final int [] explosionAnimImageNumbers = {1,2,3};
 	private static final String explosionAnimLocation = "images/explosion/explosionFrame";
 	private static final int explosionAnimDelay = 20;
-	private ImageUtils explosionAnim;
+	private AnimationUtils explosionAnim;
 	
 	
 	//---------------------constructor------------------
@@ -22,7 +22,12 @@ public class Explosion extends Sprite {
 		super(xIn, yIn);
 		this.width = widthIn;
 		this.height = heightIn;
-		explosionAnim = new ImageUtils(explosionAnimImageNumbers.length, explosionAnimLocation, explosionAnimImageNumbers, ".png", explosionAnimDelay, LoopTypes.PLAY_ONCE );
+		explosionAnim = new AnimationUtils(explosionAnimImageNumbers.length,
+                                               explosionAnimLocation,
+                                               explosionAnimImageNumbers,
+                                               ".png",
+                                               explosionAnimDelay,
+                                               LoopTypes.PLAY_ONCE );
 		
 	}
 	//-----------------update the explosion---------------

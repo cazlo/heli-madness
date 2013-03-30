@@ -26,13 +26,18 @@ public class Bird extends Sprite {
 	private static final int [] birdAnimImageNumbers = {1,2,3};
 	private static final String birdAnimLocation = "images/bird/birdFrame";
 	private static final int birdAnimDelay = MAX_BIRDS * 10;
-	private static ImageUtils birdAnim;
+	private static AnimationUtils birdAnim;
 	
 	//--------------constructor--------------
 	Bird(int xIn,int yIn, boolean initAnimation){
 		super(xIn,yIn);
 		if (initAnimation){
-			birdAnim = new ImageUtils(birdAnimImageNumbers.length, birdAnimLocation, birdAnimImageNumbers, ".png", birdAnimDelay, ImageUtils.LoopTypes.LOOP_FOREVER );
+			birdAnim = new AnimationUtils(birdAnimImageNumbers.length,
+                                                  birdAnimLocation,
+                                                  birdAnimImageNumbers,
+                                                  ".png",
+                                                  birdAnimDelay,
+                                                  AnimationUtils.LoopTypes.LOOP_FOREVER );
 		}
 		//this.setXSpeed(-1);
 		this.setXSpeed(0-(new Random().nextInt(MAX_SPEED) + 1));//random speed birds in 1 direction

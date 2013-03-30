@@ -37,7 +37,7 @@ public abstract class Sprite {
 	Sprite(int xPos, int yPos, String imageName){//, Polygon collisionShape){
 		this.setX(xPos);
 		this.setY(yPos);
-		this.spriteImage = ImageUtils.staticLoadImage(imageName);
+		this.spriteImage = AnimationUtils.staticLoadImage(imageName);
 		//this.spriteIcon = loadImage(IMAGE_DIR + imageName);
 		this.xSpeed = 0;
 	}

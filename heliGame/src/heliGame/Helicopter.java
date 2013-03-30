@@ -16,14 +16,14 @@ public class Helicopter extends Sprite{
 	static final int MAX_X_LANDING_SPEED = 2;
 	static final int MAX_Y_LANDING_SPEED = -2;
 	static final int DROP_STEP_HEIGHT = 150;//the step height at which the heli wil lose more speed
-										  //if it falls this height without engine power, the heli will
-										// fall even quicker
+						//if it falls this height without engine power, the heli will
+						//fall even quicker
 	//static final int LIFT_OFF_SPEED = 100;
 	
 	static final int HELI_WIDTH = 55;
 	static final int HELI_HEIGHT = 43;
 	
-	public static enum RotorStates{
+	public static enum ThrottleStates{//the state of the throttle and the amount of lift produced by the engine
 		//IDLE means the blades are not moving; the engine for the heli is off
 		//NO_LIFT means the blades are moving, but not provifing enough lift
 		//HOVER means the blades are producing just enough lift to hover
@@ -42,7 +42,7 @@ public class Helicopter extends Sprite{
 		STATIC_LEFT, STATIC_RIGHT, MOVING_LEFT, MOVING_RIGHT, TURNING_R2L, TURNING_L2R		
 	}
 	
-	private RotorStates rotorStatus;
+	private ThrottleStates throttleStatus;
 	private CanvasStates canvasStatus;
 	private MovementStates movementStatus;
 	
@@ -64,7 +64,7 @@ public class Helicopter extends Sprite{
 	private static final String staticLeftLocation = "images/heli/static/Left.png";
 	static final String staticRightLocation = "images/heli/static/Right.png";
 	//--------------------------------the animated images------------------------------
-	ImageUtils facingRightAnim, facingLeftAnim, turningRightToLeft, turningLeftToRight;//, hoverAnim;
+	AnimationUtils facingRightAnim, facingLeftAnim, turningRightToLeft, turningLeftToRight;//, hoverAnim;
 	private static final int [] rightImageNumbers = {1,2,3};
 	private static final int [] leftImageNumbers = {1,2};
 	//private static final int [] hoverImageNumbers = {1,2,3};
@@ -76,23 +76,23 @@ public class Helicopter extends Sprite{
 	private static final String turningLocation = "images/heli/turning/turningFrame";
 	//private static final int hoverAnimDelay = 20;
 	private static final int rightAnimDelay = 10;
-	private static final int leftAnimDelay = 5;
-	private static final int turningAnimDelay = 15;
+	private static final int leftAnimDelay = 10;
+	private static final int turningAnimDelay = 12;
 	
 	//---------------------------------constructor------------------------
 	Helicopter(int xIn, int yIn){
 		super(xIn, yIn);
-		staticFacingLeft = ImageUtils.staticLoadImage(staticLeftLocation);
-		staticFacingRight = ImageUtils.staticLoadImage(staticRightLocation);
-		facingRightAnim = new ImageUtils(rightImageNumbers.length, rightLocation, rightImageNumbers, ".png", rightAnimDelay, ImageUtils.LoopTypes.LOOP_FOREVER);
-		facingLeftAnim = new ImageUtils(leftImageNumbers.length, leftLocation, leftImageNumbers, ".png", leftAnimDelay, ImageUtils.LoopTypes.LOOP_FOREVER);
-		turningRightToLeft = new ImageUtils(turningR2LNumbers.length, turningLocation, turningR2LNumbers, ".png", turningAnimDelay, ImageUtils.LoopTypes.PLAY_ONCE);
-		turningLeftToRight = new ImageUtils(turningL2RNumbers.length, turningLocation, turningL2RNumbers, ".png", turningAnimDelay, ImageUtils.LoopTypes.PLAY_ONCE);
+		staticFacingLeft = AnimationUtils.staticLoadImage(staticLeftLocation);
+		staticFacingRight = AnimationUtils.staticLoadImage(staticRightLocation);
+		facingRightAnim = new AnimationUtils(rightImageNumbers.length, rightLocation, rightImageNumbers, ".png", rightAnimDelay, AnimationUtils.LoopTypes.LOOP_FOREVER);
+		facingLeftAnim = new AnimationUtils(leftImageNumbers.length, leftLocation, leftImageNumbers, ".png", leftAnimDelay, AnimationUtils.LoopTypes.LOOP_FOREVER);
+		turningRightToLeft = new AnimationUtils(turningR2LNumbers.length, turningLocation, turningR2LNumbers, ".png", turningAnimDelay, AnimationUtils.LoopTypes.PLAY_ONCE);
+		turningLeftToRight = new AnimationUtils(turningL2RNumbers.length, turningLocation, turningL2RNumbers, ".png", turningAnimDelay, AnimationUtils.LoopTypes.PLAY_ONCE);
 		this.movementStatus = MovementStates.STATIC_RIGHT;
 		//hoverAnim = new ImageUtils(hoverImageNumbers.length, hoverLocation,hoverImageNumbers, ".png", hoverAnimDelay, ImageUtils.LoopTypes.LOOP_FOREVER);
 		
 		this.ySpeed = 0;
-		this.rotorStatus = RotorStates.IDLE;
+		this.throttleStatus = ThrottleStates.IDLE;
 		if (this.getX() < HeliGameMain.MIDDLE_OF_FRAME){
 			this.canvasStatus = CanvasStates.MOVING_IN_LEFT;
 			this.canvasX = xIn;
@@ -194,12 +194,12 @@ public class Helicopter extends Sprite{
 		this.fallYTop = fallYTop;
 	}
 
-	public void setRotorStatus(RotorStates stateIn){
-		this.rotorStatus = stateIn;
+	public void setThrottleStatus(ThrottleStates stateIn){
+		this.throttleStatus = stateIn;
 	}
 	
-	public RotorStates getRotorStatus(){
-		return this.rotorStatus;
+	public ThrottleStates getThrottleStatus(){
+		return this.throttleStatus;
 	}
 	
 	public CanvasStates getCanvasStatus() {
@@ -250,7 +250,7 @@ public class Helicopter extends Sprite{
 	public void updateHeli() {
 		
 		
-		switch (this.rotorStatus){
+		switch (this.throttleStatus){
 			case IDLE:
 				if (this.getY() < HeliGameMain.GAME_HEIGHT){//only move it down if its not on the bottom
 					

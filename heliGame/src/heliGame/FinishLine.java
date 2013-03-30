@@ -45,7 +45,10 @@ public class FinishLine extends Sprite{
 
     @Override
     public void generateCollisionShape() {
-        this.setCollisionShape(new Rectangle(this.getX(),0,levelLength - this.getX(),HeliGameMain.GAME_HEIGHT));
+        this.setCollisionShape(new Rectangle(this.getX(),//x
+                                             0,//y
+                                             levelLength - this.getX(),//width
+                                             HeliGameMain.GAME_HEIGHT));//height
     }
 
     @Override
