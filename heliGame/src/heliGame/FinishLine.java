@@ -2,6 +2,7 @@
  * The finish line.  If the heli crosses it totally and lands, the level is
  * completed
  */
+//
 package heliGame;
 
 import java.awt.Color;
