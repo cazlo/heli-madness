@@ -7,6 +7,8 @@ import heliGame.Level.LevelNotLoadedException;
 //import heliSim.Level.LevelStates;
 //
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Rectangle2D;
@@ -40,6 +42,9 @@ public class HeliGameMain extends JFrame {
 	private Explosion heliExplosion;
 	private Level currentLevel;
         private GameOverMessage gameOverMessage;
+        private HelpMenu helpMenu;
+        
+        //other stuff for game
 	private int currentLevelNumber = 1;
 	private int score;
         private boolean win = false;
@@ -56,6 +61,7 @@ public class HeliGameMain extends JFrame {
 		init();
 		
 		//set up UI components
+                //this.setContentPane(new JDesktopPane());
 		Container contentPane = this.getContentPane();
 		contentPane.setLayout(new BorderLayout() );
 		gamePanel = new GamePanel();
@@ -76,6 +82,10 @@ public class HeliGameMain extends JFrame {
 		this.pack();
 		this.setVisible(true);
 		
+                helpMenu = new HelpMenu();
+                helpMenu.setLocationRelativeTo(this);
+                
+                gameState = gameStates.PAUSED;
 		start();
 	}
 		
@@ -308,17 +318,30 @@ public class HeliGameMain extends JFrame {
 		//check to see if it hits a bird
 		for (int birdNum = 0; birdNum < Bird.MAX_BIRDS; birdNum++){
 			if (currentLevel.getBirds()[birdNum].intersects((Rectangle2D)heli.getCollisionShape())){
-				//gameState = gameStates.GAMEOVER;
-                                currentLevel.getBirds()[birdNum].setXSpeed(-1);//slow the bird so it will remain within the explosion
-				gameState = gameStates.EXPLODING;
-				heliExplosion = new Explosion(heli.getCanvasX(),
-                                                              heli.getY(),
-                                                              Helicopter.HELI_WIDTH,
-                                                              Helicopter.HELI_HEIGHT);
-				currentLevel.setXSpeed(0);
-				if (DEBUG){
-					System.out.println("collision with bird");	
-				}
+				switch(heli.getThrottleStatus()){
+                                    case IDLE:
+                                        //make bird go over the heli if it is idle
+                                        currentLevel.getBirds()[birdNum].setY(currentLevel.getBirds()[birdNum].getY() - 1);
+                                        if (DEBUG){
+                                                System.out.println("collision with bird");	
+                                        }
+                                        break;
+                                    case NO_LIFT://if the rotor is spinning and
+                                    case HOVER:  //a bird collides with it, 
+                                    case LIFT:   //you're gonna have a bad time
+                                        currentLevel.getBirds()[birdNum].setXSpeed(-1);//slow the bird so it will remain within the explosion
+                                        gameState = gameStates.EXPLODING;
+                                        heliExplosion = new Explosion(heli.getCanvasX(),
+                                                                      heli.getY(),
+                                                                      Helicopter.HELI_WIDTH,
+                                                                      Helicopter.HELI_HEIGHT);
+                                        currentLevel.setXSpeed(0);
+                                        if (DEBUG){
+                                                System.out.println("fatal collision with bird");	
+                                        }
+                                        break;
+                                }
+                        
 			}
 		}
 		
@@ -616,10 +639,28 @@ public class HeliGameMain extends JFrame {
 				}
 				break;
 			case KeyEvent.VK_H:
-				//TODO process H pressed
+				switch (gameState){
+					case PLAYING:
+						gameState = gameStates.PAUSED;
+                                                if (helpMenu.isVisible()){
+                                                    helpMenu.setVisible(false);
+                                                }
+                                                else{
+                                                    helpMenu.setVisible(true);
+                                                }
+						break;
+					case PAUSED:
+					case GAMEOVER:
+                                                if (helpMenu.isVisible()){
+                                                    helpMenu.setVisible(false);
+                                                }
+                                                else{
+                                                    helpMenu.setVisible(true);
+                                                }
+						break;
+				}
 				break;
 			case KeyEvent.VK_P:
-				//TODO process p pressed
 				switch (gameState){
 					case PLAYING:
 						gameState = gameStates.PAUSED;
@@ -792,7 +833,7 @@ public class HeliGameMain extends JFrame {
 	//-----setup as inner classes to make accessing instances of game objects easier----------
 	
 	//the panel for which the game itself will be drawn on 
-	public class GamePanel extends JPanel implements KeyListener {
+	private class GamePanel extends JPanel implements KeyListener {
 
 		//constructor
 		public GamePanel(){
@@ -828,7 +869,7 @@ public class HeliGameMain extends JFrame {
 	}
 	
 	//the panel with instruments indicating the heli's stats
-	public class InstrumentPanel extends JPanel {
+	private class InstrumentPanel extends JPanel {
 		private JLabel vertSpeedLbl;
 		private JLabel horzSpeedLbl;
 		private JLabel throttleLbl;
@@ -892,9 +933,94 @@ public class HeliGameMain extends JFrame {
 	}
 	
 	//panel which gives the options to pause, play game, startover, bring up help menu
-	public class OptionsPanel extends JPanel{
+	private class OptionsPanel extends JPanel{
 
 	}
+        
+        //--------------------------------------help menu------------------------------------
+        private class HelpMenu extends JFrame{
+            HelpMenu(){
+                JLabel titleLabel, objectiveLabel, controlsLabel, upLabel, downLabel, 
+                        rightLabel,leftLabel, pauseLabel, helpLabel; 
+                JButton playButton;
+                        
+                Container contentPane = this.getContentPane();
+                //set up UI components
+                contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+                titleLabel = new JLabel("Help Menu");
+                titleLabel.setFont(new Font("Serif", Font.BOLD, 42));
+                titleLabel.setAlignmentX(this.CENTER_ALIGNMENT);
+                
+                objectiveLabel = new JLabel("Fly through as many rings as possible while avoiding birds");
+                objectiveLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                objectiveLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                controlsLabel = new JLabel("Controls:");
+                controlsLabel.setFont(new Font("Serif", Font.BOLD, 36));
+                controlsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                upLabel = new JLabel("Press the up arrow or 'w' to increase throttle");
+                upLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                upLabel.setAlignmentX(this.CENTER_ALIGNMENT);
+                
+                downLabel = new JLabel("Press the down arrow or 's' to decrease throttle");
+                downLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                downLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                
+                leftLabel = new JLabel("Press the left arrow or 'a' to move to the left");
+                leftLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                leftLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                rightLabel = new JLabel("Press the right arrow or 'd' to move to the right");
+                rightLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                rightLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                pauseLabel = new JLabel("Press 'p' to pause and resume the game");
+                pauseLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                pauseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                helpLabel = new JLabel("Press 'h' to bring up this screen");
+                helpLabel.setFont(new Font("Serif", Font.PLAIN, 26));
+                helpLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                playButton = new JButton("PLAY");
+                playButton.addActionListener(new ActionListener(){
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        HeliGameMain.HelpMenu.this.setVisible(false);
+                        if (gameState == gameStates.GAMEOVER){
+                            start();
+                        }
+                        else{
+                            gameState = gameStates.PLAYING;
+                        }
+                    }
+                });
+                playButton.setAlignmentX(Component.CENTER_ALIGNMENT);               
+                
+                
+                contentPane.add(titleLabel);
+                contentPane.add(objectiveLabel);
+                contentPane.add(controlsLabel);
+                contentPane.add(upLabel);
+                contentPane.add(downLabel);
+                contentPane.add(leftLabel);
+                contentPane.add(rightLabel);
+                contentPane.add(pauseLabel);
+                contentPane.add(helpLabel);
+                contentPane.add(playButton);
+                
+		//this.setLocationRelativeTo(null);//center it on the screen
+		this.setTitle("Helicopter Game Help Menu");
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+                this.setResizable(false);
+                
+		this.pack();
+		this.setVisible(true);
+		
+            }
+        }
 
 	//-----------------------------finally main insertion point for program--------------------
 	/**
