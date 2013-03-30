@@ -20,8 +20,8 @@ public class Helicopter extends Sprite{
 										// fall even quicker
 	//static final int LIFT_OFF_SPEED = 100;
 	
-	static final int HELI_WIDTH = 60;
-	static final int HELI_HEIGHT = 60;
+	static final int HELI_WIDTH = 55;
+	static final int HELI_HEIGHT = 43;
 	
 	public static enum RotorStates{
 		//IDLE means the blades are not moving; the engine for the heli is off
@@ -38,7 +38,7 @@ public class Helicopter extends Sprite{
 		STATIONARY, MOVING_IN_LEFT, MOVING_IN_RIGHT
 	}
 	
-	public static enum MovementStates{//the state of horizontal movement of the 
+	public static enum MovementStates{//the state of horizontal movement of the heli
 		STATIC_LEFT, STATIC_RIGHT, MOVING_LEFT, MOVING_RIGHT, TURNING_R2L, TURNING_L2R		
 	}
 	
@@ -65,7 +65,7 @@ public class Helicopter extends Sprite{
 	static final String staticRightLocation = "images/heli/static/Right.png";
 	//--------------------------------the animated images------------------------------
 	ImageUtils facingRightAnim, facingLeftAnim, turningRightToLeft, turningLeftToRight;//, hoverAnim;
-	private static final int [] rightImageNumbers = {1,2};
+	private static final int [] rightImageNumbers = {1,2,3};
 	private static final int [] leftImageNumbers = {1,2};
 	//private static final int [] hoverImageNumbers = {1,2,3};
 	private static final int [] turningR2LNumbers = {1,2,3};
@@ -75,7 +75,7 @@ public class Helicopter extends Sprite{
 	private static final String leftLocation = "images/heli/facingLeft/leftFrame";
 	private static final String turningLocation = "images/heli/turning/turningFrame";
 	//private static final int hoverAnimDelay = 20;
-	private static final int rightAnimDelay = 5;
+	private static final int rightAnimDelay = 10;
 	private static final int leftAnimDelay = 5;
 	private static final int turningAnimDelay = 15;
 	
@@ -243,7 +243,7 @@ public class Helicopter extends Sprite{
 	
 	@Override
 	public void generateCollisionShape() {
-		this.setCollisionShape(new Rectangle(this.getX(),this.getY(),HELI_WIDTH,HELI_HEIGHT));
+		this.setCollisionShape(new Rectangle(this.getX(),this.getY() + 10,HELI_WIDTH,HELI_HEIGHT - 10));
 	}
 	
 	//-------method to update the y of the heli, and x relative to level for heli----------------

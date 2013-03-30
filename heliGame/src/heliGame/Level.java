@@ -43,6 +43,8 @@ public class Level {
 	private Bird [] birds;
 	
 	private ArrayList<Ring> ringList;
+        
+        private FinishLine finishLine;
 	
 	//-------------------------constructor--------------------------
 	Level(int levelNumberIn) throws LevelNotLoadedException{
@@ -61,7 +63,9 @@ public class Level {
 		if (loadedLevel()){
 			this.levelLength = groundXPoints.get(groundXPoints.size()-1);
 			ground = new Ground(groundXPoints,groundYPoints);
-			
+			finishLine = new FinishLine(groundXPoints.get(groundXPoints.size()-1) - (HeliGameMain.GAME_WIDTH/3),
+                                                    groundYPoints.get(groundYPoints.size()-1) - FinishLine.HEIGHT, this.levelLength );
+                                
 			//randomly generate birds
 			Random numGenerator = new Random();
 			for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
@@ -137,6 +141,10 @@ public class Level {
 	public Bird [] getBirds(){
 		return this.birds;
 	}
+        
+        public FinishLine getFinishLine(){
+            return this.finishLine;
+        }
 	//-------------------------------tools to parse the level files-----------------------
 	
 	public boolean loadedLevel(){
@@ -226,7 +234,8 @@ public class Level {
 						groundXPoints.add(Integer.parseInt(subString));
 						subString = "";
 					}
-				}	
+				}
+                                //this.levelLength = groundXPoints.get(groundXPoints.size()-1);
 				
 			}
 			catch(NumberFormatException e){
@@ -265,7 +274,7 @@ public class Level {
 			catch(NumberFormatException e){
 				System.out.println("ERROR: error processing the line: "+lineIn);
 			}
-		}
+		}                
 		else{
 			//it is something else, so just ignore it
 		}
@@ -298,6 +307,7 @@ public class Level {
 		}
 		
 		//put ground onto this image
+                finishLine.drawSprite(g);
 		ground.drawGround(g2);
 		
 		/*

@@ -21,7 +21,7 @@ public class HeliGameMain extends JFrame {
 	static final boolean DEBUG = true;
 	
 	//define constants for the game
-	static final int GAME_WIDTH = 800; //width of game window
+	static final int GAME_WIDTH = 1200; //width of game window
 	static final int GAME_HEIGHT = 600; // height of game window
 	static final int UPDATE_RATE = 80; //number of game updates per second
 	static final long UPDATE_PERIOD = 1000000000L / UPDATE_RATE;  // time (nanoseconds) that loop thread is paused between game updates
@@ -39,8 +39,10 @@ public class HeliGameMain extends JFrame {
 	private Helicopter heli;
 	private Explosion heliExplosion;
 	private Level currentLevel;
+        private GameOverMessage gameOverMessage;
 	private int currentLevelNumber = 1;
 	private int score;
+        private boolean win = false;
 	//Ground groundSprite;
 	
 	//define handler for panels of game
@@ -69,7 +71,8 @@ public class HeliGameMain extends JFrame {
 		
 		this.setTitle("Helicopter Game");
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-
+                this.setResizable(false);
+                
 		this.pack();
 		this.setVisible(true);
 		
@@ -140,9 +143,10 @@ public class HeliGameMain extends JFrame {
 				updateGame();
 			}
 			if (gameState == gameStates.NEXTLEVEL){
-				if (currentLevelNumber > NUM_LEVELS){
+				if (currentLevelNumber >= NUM_LEVELS){
 					//TODO: completed all levels
-					
+					win = true;
+                                        gameState = gameStates.GAMEOVER;
 				}
 				else{
 					currentLevelNumber ++;
@@ -281,7 +285,6 @@ public class HeliGameMain extends JFrame {
 		
 	}
 	public void collisionDetection() {
-		//TODO check to see if it hits a ring
 		
 		//------------------------------tree collision--------------------------
 		//check to see if it hits a tree
@@ -303,6 +306,7 @@ public class HeliGameMain extends JFrame {
 		for (int birdNum = 0; birdNum < Bird.MAX_BIRDS; birdNum++){
 			if (currentLevel.getBirds()[birdNum].intersects((Rectangle2D)heli.getCollisionShape())){
 				//gameState = gameStates.GAMEOVER;
+                                currentLevel.getBirds()[birdNum].setXSpeed(-1);//slow the bird so it will remain within the explosion
 				gameState = gameStates.EXPLODING;
 				heliExplosion = new Explosion(heli.getCanvasX(), heli.getY(), Helicopter.HELI_WIDTH, Helicopter.HELI_HEIGHT);
 				currentLevel.setXSpeed(0);
@@ -434,6 +438,11 @@ public class HeliGameMain extends JFrame {
 				//}
 			}
 		}
+                
+                //---------------------------check to see if within finish line------------------
+                if (heli.isLanded() && currentLevel.getFinishLine().contains((Rectangle2D)heli.getCollisionShape())){
+                    gameState = gameStates.NEXTLEVEL;
+                }
 	}
 
 	//refresh the game. called in the repaint method of gamepanel
@@ -441,18 +450,26 @@ public class HeliGameMain extends JFrame {
 		switch (gameState){
 			case PLAYING:
 			case PAUSED:
-				heli.drawSprite(g);
 				currentLevel.drawVisibleLevel(g);
+                                heli.drawSprite(g);
 				break;
 			case EXPLODING:
-				heli.drawSprite(g);
 				currentLevel.drawVisibleLevel(g);
+                                heli.drawSprite(g);
 				heliExplosion.drawSprite(g);
 				break;
 			case GAMEOVER:
 				//TODO: Draw stuff for gameover
 				//heli.drawSprite(g);
 				currentLevel.drawVisibleLevel(g);
+                                if (win){
+                                    heli.drawSprite(g);
+                                    //TODO: draw something for win
+                                }
+                                else{
+                                    gameOverMessage = new GameOverMessage();
+                                    gameOverMessage.draw(g);
+                                }
 				break;
 		}
 	}
