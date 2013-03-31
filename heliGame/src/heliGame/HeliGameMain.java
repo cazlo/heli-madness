@@ -39,7 +39,7 @@ public class HeliGameMain extends JFrame {
 		
 	//define instance variables of game objects
 	private Helicopter heli;
-	private Explosion heliExplosion;
+	private Explosion heliExplosion, birdExplosion;
 	private Level currentLevel;
         private GameOverMessage gameOverMessage;
         private HelpMenu helpMenu;
@@ -91,6 +91,7 @@ public class HeliGameMain extends JFrame {
 		
 	public void init() {
 		// initialize game objects
+                this.win = false;
 		this.currentLevelNumber = 1;
 		try{
 			currentLevel = new Level(currentLevelNumber);
@@ -101,6 +102,7 @@ public class HeliGameMain extends JFrame {
 		
 		this.score = 0;
 		heli = new Helicopter(currentLevel.getStartX(),currentLevel.getStartY());
+                birdExplosion = null;//(re)-set birdExplosion to null so it wont be dranw erraneously 
 		
 		gameState = gameStates.INITIALIZED;
 	}
@@ -145,6 +147,9 @@ public class HeliGameMain extends JFrame {
 				}
 				else{
 					heliExplosion.updateExplosion();
+                                        if (birdExplosion != null){
+                                            birdExplosion.updateExplosion();
+                                        }
 					currentLevel.updateLevel();
 				}
 			}
@@ -156,6 +161,7 @@ public class HeliGameMain extends JFrame {
 				if (currentLevelNumber >= NUM_LEVELS){
 					//TODO: completed all levels
 					win = true;
+                                        gameOverMessage = new GameOverMessage("All Levels Completed");
                                         gameState = gameStates.GAMEOVER;
 				}
 				else{
@@ -300,13 +306,12 @@ public class HeliGameMain extends JFrame {
 		//check to see if it hits a tree
 		for (int treeNum = 0; treeNum < currentLevel.getTreeList().size(); treeNum++){
 			if(currentLevel.getTreeList().get(treeNum).intersects((Rectangle2D)heli.getCollisionShape())){
-				//TODO:process heli hitting tree
-				//gameState = gameStates.GAMEOVER;
 				gameState = gameStates.EXPLODING;
+                                gameOverMessage = new GameOverMessage("Collision With Tree");
 				heliExplosion = new Explosion(heli.getCanvasX(),
                                                               heli.getY(),
-                                                              Helicopter.HELI_WIDTH,
-                                                              Helicopter.HELI_HEIGHT);
+                                                              Helicopter.HELI_WIDTH + 20,
+                                                              Helicopter.HELI_HEIGHT + 20);
 				currentLevel.setXSpeed(0);
 				if (DEBUG){
 					System.out.println("Collision with tree");
@@ -329,12 +334,19 @@ public class HeliGameMain extends JFrame {
                                     case NO_LIFT://if the rotor is spinning and
                                     case HOVER:  //a bird collides with it, 
                                     case LIFT:   //you're gonna have a bad time
-                                        currentLevel.getBirds()[birdNum].setXSpeed(-1);//slow the bird so it will remain within the explosion
                                         gameState = gameStates.EXPLODING;
+                                        gameOverMessage = new GameOverMessage("Fatal Collision With Bird");
+                                        currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
+                                        birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getCanvasX()
+                                                              ,currentLevel.getBirds()[birdNum].getY()
+                                                              ,Bird.BIRD_WIDTH
+                                                              ,Bird.BIRD_HEIGHT);
+                                        currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
+                                   
                                         heliExplosion = new Explosion(heli.getCanvasX(),
                                                                       heli.getY(),
-                                                                      Helicopter.HELI_WIDTH,
-                                                                      Helicopter.HELI_HEIGHT);
+                                                                      Helicopter.HELI_WIDTH + 20,
+                                                                      Helicopter.HELI_HEIGHT + 20);
                                         currentLevel.setXSpeed(0);
                                         if (DEBUG){
                                                 System.out.println("fatal collision with bird");	
@@ -367,11 +379,12 @@ public class HeliGameMain extends JFrame {
 			if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED || //going to fast horizontally to safely land traveling to the right
 				heli.getXSpeed() < (0-Helicopter.MAX_X_LANDING_SPEED)){//going to fast to safely land in - x direction (to the left)
 				//gameState = gameStates.GAMEOVER;
+                                gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
 				gameState = gameStates.EXPLODING;
 				heliExplosion = new Explosion(heli.getCanvasX(),
                                                               heli.getY(),
-                                                              Helicopter.HELI_WIDTH,
-                                                              Helicopter.HELI_HEIGHT);
+                                                              Helicopter.HELI_WIDTH + 20,
+                                                              Helicopter.HELI_HEIGHT + 20);
 				currentLevel.setXSpeed(0);
 				if (DEBUG){
 					System.out.println("intersected ground too fast");
@@ -382,11 +395,12 @@ public class HeliGameMain extends JFrame {
 				if (heli.getYSpeed() < (Helicopter.MAX_Y_LANDING_SPEED)){
 					//TODO: process heli blowing up
 					//gameState = gameStates.GAMEOVER;
+                                        gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
 					gameState = gameStates.EXPLODING;
 					heliExplosion = new Explosion(heli.getCanvasX(),
                                                                       heli.getY(),
-                                                                      Helicopter.HELI_WIDTH,
-                                                                      Helicopter.HELI_HEIGHT);
+                                                                      Helicopter.HELI_WIDTH + 20,
+                                                                      Helicopter.HELI_HEIGHT + 20);
 					currentLevel.setXSpeed(0);
 					if (DEBUG){
 						System.out.println("intersected ground too fast");
@@ -413,10 +427,11 @@ public class HeliGameMain extends JFrame {
 			if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
 				heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
 				gameState = gameStates.EXPLODING;
+                                gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
 				heliExplosion = new Explosion(heli.getCanvasX(),
                                                               heli.getY(),
-                                                              Helicopter.HELI_WIDTH,
-                                                              Helicopter.HELI_HEIGHT);
+                                                              Helicopter.HELI_WIDTH + 20,
+                                                              Helicopter.HELI_HEIGHT + 20);
 				currentLevel.setXSpeed(0);
 			}
 			else{
@@ -450,6 +465,7 @@ public class HeliGameMain extends JFrame {
 			if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
 					heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
 					gameState = gameStates.EXPLODING;
+                                        gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
 					heliExplosion = new Explosion(heli.getCanvasX(),
                                                                       heli.getY(),
                                                                       Helicopter.HELI_WIDTH,
@@ -498,7 +514,10 @@ public class HeliGameMain extends JFrame {
 			case EXPLODING:
 				currentLevel.drawVisibleLevel(g);
                                 heli.drawSprite(g);
-				heliExplosion.drawSprite(g);
+                                if (birdExplosion != null){
+                                    birdExplosion.drawSprite(g);
+                                }
+                                heliExplosion.drawSprite(g);
 				break;
 			case GAMEOVER:
 				//TODO: Draw stuff for gameover
@@ -507,9 +526,9 @@ public class HeliGameMain extends JFrame {
                                 if (win){
                                     heli.drawSprite(g);
                                     //TODO: draw something for win
+                                    gameOverMessage.draw(g);
                                 }
                                 else{
-                                    gameOverMessage = new GameOverMessage();
                                     gameOverMessage.draw(g);
                                 }
 				break;

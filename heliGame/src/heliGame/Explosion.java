@@ -4,9 +4,12 @@ import heliGame.AnimationUtils.LoopTypes;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.geom.Rectangle2D;
 
 public class Explosion extends Sprite {
+        static final int DEFAULT_WIDTH = 60;
+        static final int DEFAULT_HEIGHT = 60;
 	private int width, height;
 	
 	
@@ -56,8 +59,13 @@ public class Explosion extends Sprite {
 			g.fillRect(this.getX(), this.getY(), width, height);//draw a rectangle the size of the sprite
 		}
 		else{
-			//this.getSpriteImage().paintIcon(null, g, this.canvasX, this.getY());
-			g.drawImage(explosionAnim.getCurrentFrame(), this.getX(), this.getY(), null);
+			if (width != DEFAULT_WIDTH || height != DEFAULT_HEIGHT){
+                            Image scaledAnimFrame = (Image)explosionAnim.getCurrentFrame().getScaledInstance(width, height, Image.SCALE_FAST);
+                            g.drawImage(scaledAnimFrame, this.getX(), this.getY(), null);
+                        }
+                        else{
+                            g.drawImage(explosionAnim.getCurrentFrame(), this.getX(), this.getY(), null);
+                        }
 		}
 	}
 	public boolean doneExploding() {
