@@ -12,10 +12,12 @@ import java.awt.Graphics2D;
 
 public class GameOverMessage {
     int x, y;
+    String gameOverCause;
     
-    GameOverMessage(){
+    GameOverMessage(String reason){
         this.x = HeliGameMain.GAME_WIDTH/2;
         this.y = HeliGameMain.GAME_HEIGHT/2;
+        gameOverCause = reason;
     }
     
     public void draw(Graphics g){
@@ -26,5 +28,11 @@ public class GameOverMessage {
         g2.drawString("Game Over",
                      x - (g2.getFontMetrics().stringWidth("Game Over")/2),
                      y);
+        int heightOfGameOver = g2.getFontMetrics().getHeight();
+        
+        g2.setFont(new Font("Lucidia", Font.PLAIN, 69));
+        g2.drawString(this.gameOverCause,
+                     x - (g2.getFontMetrics().stringWidth(this.gameOverCause)/2),
+                     y + heightOfGameOver + 6);
     }
 }

@@ -23,7 +23,7 @@ public class Helicopter extends Sprite{
 	static final int HELI_WIDTH = 55;
 	static final int HELI_HEIGHT = 43;
 	
-	public static enum ThrottleStates{//the state of the throttle and the amount of lift produced by the engine
+	public static enum ThrottleStates{//the state of the throttle which effects the amount of lift produced by the engine
 		//IDLE means the blades are not moving; the engine for the heli is off
 		//NO_LIFT means the blades are moving, but not provifing enough lift
 		//HOVER means the blades are producing just enough lift to hover
@@ -374,7 +374,7 @@ public class Helicopter extends Sprite{
 		}
 		else if (this.getXSpeed() > 0){//moving to the right
 			if (this.getX()<= HeliGameMain.MIDDLE_OF_FRAME &&
-					(this.getX() + this.getXSpeed()) >= HeliGameMain.MIDDLE_OF_FRAME){//if it crosses the first point
+			 (this.getX() + this.getXSpeed()) >= HeliGameMain.MIDDLE_OF_FRAME){//if it crosses the first point
 				return true;
 			}
 			else{
