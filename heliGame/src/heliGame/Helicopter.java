@@ -31,19 +31,13 @@ public class Helicopter extends Sprite{
 		IDLE, NO_LIFT, HOVER, LIFT
 	}
 	
-	public static enum CanvasStates{// the state of the heli with respect to the middle canvas
-		//STATIONARY means the heli is not moving(its in the middle of the canvas), and the level is moving
-		//MOVING_IN_LEFT means it is moving in any direction on the left side of the middle point of the canvas
-		//MOVING_IN_RIGHT means it is moving in any direction on the right side of the middle point of the canvas
-		STATIONARY, MOVING_IN_LEFT, MOVING_IN_RIGHT
-	}
+	
 	
 	public static enum MovementStates{//the state of horizontal movement of the heli
 		STATIC_LEFT, STATIC_RIGHT, MOVING_LEFT, MOVING_RIGHT, TURNING_R2L, TURNING_L2R		
 	}
 	
 	private ThrottleStates throttleStatus;
-	private CanvasStates canvasStatus;
 	private MovementStates movementStatus;
 	
 	private int canvasX;//location relative to the visible screen
@@ -93,20 +87,7 @@ public class Helicopter extends Sprite{
 		
 		this.ySpeed = 0;
 		this.throttleStatus = ThrottleStates.IDLE;
-		if (this.getX() < HeliGameMain.MIDDLE_OF_FRAME){
-			this.canvasStatus = CanvasStates.MOVING_IN_LEFT;
-			this.canvasX = xIn;
-		}
-		else if (this.getX() == HeliGameMain.MIDDLE_OF_FRAME){
-			this.canvasStatus = CanvasStates.STATIONARY;
-			this.canvasX = xIn;
-		}
-		else{
-			this.canvasStatus = CanvasStates.STATIONARY;
-			this.canvasX = HeliGameMain.MIDDLE_OF_FRAME;
-		}
-		
-		this.landed = true;
+                this.landed = true;
 		this.theta = 0;
 		//this.rotorSpeed = 0;
 		//this.setWidth(HELI_WIDTH);
@@ -201,14 +182,14 @@ public class Helicopter extends Sprite{
 	public ThrottleStates getThrottleStatus(){
 		return this.throttleStatus;
 	}
-	
+	/*
 	public CanvasStates getCanvasStatus() {
 		return canvasStatus;
 	}
 
 	public void setCanvasStatus(CanvasStates canvasStatus) {
 		this.canvasStatus = canvasStatus;
-	}
+	}*/
 	public MovementStates getMovementStatus() {
 		return movementStatus;
 	}
@@ -237,8 +218,12 @@ public class Helicopter extends Sprite{
 	//-----------------methods for collision detection---------------------
 	@Override
 	public boolean intersects(Rectangle2D rectangleIn) {
-		// TODO Auto-generated method stub
-		return false;
+            if (rectangleIn.intersects(this.getCollisionRectangle2D())){
+		return true;
+            }
+            else{
+                return false;
+            }
 	}
 	
 	@Override

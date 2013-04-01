@@ -54,15 +54,15 @@ public class FinishLine extends Sprite{
     @Override
     public void drawSprite(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
-		// TODO Auto-generated method stub
-		if(this.getSpriteImage() == null){//no image for sprite
-			g2.setColor(Color.RED);
-			g2.fillRect(this.getX(), this.getY(), WIDTH, HEIGHT);
-		}
-		else{
-			//this.getSpriteImage().paintIcon(null, g, this.getX(), this.getY());
-			g.drawImage(this.getSpriteImage(), this.getX(), this.getY(), null);
-		}
+        
+        if(this.getSpriteImage() == null){//no image for sprite
+            g2.setColor(Color.RED);
+            g2.fillRect(this.getX(), this.getY(), WIDTH, HEIGHT);
+        }
+        else{
+            //this.getSpriteImage().paintIcon(null, g, this.getX(), this.getY());
+            g.drawImage(this.getSpriteImage(), this.getX(), this.getY(), null);
+        }
     }
     
 }

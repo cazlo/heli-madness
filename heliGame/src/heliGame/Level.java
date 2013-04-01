@@ -70,10 +70,10 @@ public class Level {
 			Random numGenerator = new Random();
 			for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
 				if(birdIndex == 0){//initialize the animation if it is the first bird only
-					birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE), true);
+					birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE));//, true);
 				}
 				else{
-					birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE), false);
+					birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE));//, false);
 				}
 				
 				//check to see if the bird is within a 200 pixels horizontally or vertically if the heli
@@ -81,10 +81,10 @@ public class Level {
 				while (birds[birdIndex].intersects(
 						new Rectangle(this.startX - 200, this.startY - 200, 400 + Helicopter.HELI_WIDTH, 400 + Helicopter.HELI_HEIGHT))){
 					if(birdIndex == 0){//initialize the animation if it is the first bird only
-						birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE), true);
+						birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE));//, true);
 					}
 					else{
-						birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE), false);
+						birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength) ,numGenerator.nextInt(Bird.MIN_ALTITUDE));//, false);
 					}
 				}
 			}
@@ -326,42 +326,42 @@ public class Level {
 			this.offScreenImage = this.wholeLevelImage.getSubimage(this.currentX, 0, HeliGameMain.GAME_WIDTH, HeliGameMain.GAME_HEIGHT);
 		}
 		catch (RasterFormatException ex){//somehow the image got un-synced and , re-sync it
-			if (this.currentX > this.levelLength - HeliGameMain.GAME_WIDTH){
-				this.currentX = (this.levelLength - HeliGameMain.GAME_WIDTH);
-			}
-			else if (this.currentX < 0){
-				this.currentX = 0;
-			}
-			if (HeliGameMain.DEBUG){
-				System.out.println("RasterFormatException handled");
-			}
-			this.offScreenImage = this.wholeLevelImage.getSubimage(this.currentX, 0, HeliGameMain.GAME_WIDTH, HeliGameMain.GAME_HEIGHT);
+                    if (this.currentX > this.levelLength - HeliGameMain.GAME_WIDTH){
+                            this.currentX = (this.levelLength - HeliGameMain.GAME_WIDTH);
+                    }
+                    else if (this.currentX < 0){
+                            this.currentX = 0;
+                    }
+                    if (HeliGameMain.DEBUG){
+                            System.out.println("RasterFormatException handled");
+                    }
+                    this.offScreenImage = this.wholeLevelImage.getSubimage(this.currentX, 0, HeliGameMain.GAME_WIDTH, HeliGameMain.GAME_HEIGHT);
 		}
 		g.drawImage(offScreenImage, 0, 0, null);
 		
 		//----------------------draw visible birds--------------
 		for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
-			if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
-			    (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
-				birds[birdIndex].setCanvasX( birds[birdIndex].getX() - this.currentX );//set the x to draw the bird on the canvas
-				birds[birdIndex].drawSprite(g);
-			}
-			else{
-				//dont draw the bird
-			}
+                    if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
+                        (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
+                            birds[birdIndex].setCanvasX( birds[birdIndex].getX() - this.currentX );//set the x to draw the bird on the canvas
+                            birds[birdIndex].drawSprite(g);
+                    }
+                    else{
+                            //dont draw the bird
+                    }
 		}
 		
 		//-----------------draw visible rings------------------
 		for (int ringNum = 0; ringNum < ringList.size(); ringNum++){
-			if ((ringList.get(ringNum).getX()>= (this.currentX - Ring.RING_WIDTH)) &&
-				(ringList.get(ringNum).getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
-				
-				ringList.get(ringNum).setCanvasX( ringList.get(ringNum).getX() - this.currentX );//set the x to draw the bird on the canvas
-				ringList.get(ringNum).drawSprite(g);
-			}
-			else{
-				//dont draw the ring
-			}
+                    if ((ringList.get(ringNum).getX()>= (this.currentX - Ring.RING_WIDTH)) &&
+                        (ringList.get(ringNum).getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
+
+                        ringList.get(ringNum).setCanvasX( ringList.get(ringNum).getX() - this.currentX );//set the x to draw the bird on the canvas
+                        ringList.get(ringNum).drawSprite(g);
+                    }
+                    else{
+                            //dont draw the ring
+                    }
 		}
 		
 		//g.drawImage(wholeLevelImage,0,0,HeliSimMain.GAME_WIDTH, HeliSimMain.GAME_HEIGHT,
@@ -370,39 +370,34 @@ public class Level {
 	
 	//--------------------------Update position of level and level's objects---------------
 	public void updateLevel(){
-		this.currentX += xSpeed;
-		//TODO: update position of level's objects
-		//-----------process each bird 1 at a time--------------------
-		for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
-			//-----------------check to see if bird is going into ground-----------------
-			while(ground.containsPoint(birds[birdIndex].getX(), birds[birdIndex].getY() + Bird.BIRD_HEIGHT - 1)){
-				birds[birdIndex].setY(birds[birdIndex].getY() - 4);
-			}
-			
-			//-------------check to see if it drifted off the screen--------
-			if (birds[birdIndex].getX() < (0 - Bird.BIRD_WIDTH)){//it drifted off the screen
-				//put it back at the end of the level
-				birds[birdIndex].setX(this.levelLength);
-				birds[birdIndex].setY(birds[birdIndex].getInitialY());
-			}
-			else{//update it as normal
-				birds[birdIndex].updateBird();
-			}
-		}
+            this.currentX += xSpeed;
+            //update position of level's objects
+            //-----------process each bird 1 at a time--------------------
+            for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
+                //-----------------check to see if bird is going into ground-----------------
+                while(ground.containsPoint(birds[birdIndex].getX(),
+                                           birds[birdIndex].getY() + Bird.BIRD_HEIGHT - 1)){
+                    birds[birdIndex].setY(birds[birdIndex].getY() - 4);
+                    
+                }
+
+                //-------------check to see if it drifted off the screen--------
+                if (birds[birdIndex].getX() < (0 - Bird.BIRD_WIDTH)){//it drifted off the screen
+                    //put it back at the end of the level
+                    birds[birdIndex].setX(this.levelLength);
+                    birds[birdIndex].setY(birds[birdIndex].getInitialY());
+                }
+                //else{//update it as normal
+                birds[birdIndex].updateBird();
+                
+                if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
+                    (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
+                    //if it is visible update its animation
+                    birds[birdIndex].updateBirdAnimation();
+                }
+            }
 	}
 
-	/*
-	//------------------Give ability for program to access object to test for collision------
-	public boolean intersectsTree(){
-		return false;
-		
-	}
-	
-	public boolean intersectsGround(){
-		return false;
-		
-	}*/
-	
 	//-------------Class for custom exception which a level can throw when improperly loaded-----------
 	public class LevelNotLoadedException extends Exception{
 		public LevelNotLoadedException(String message){

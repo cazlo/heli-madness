@@ -1,6 +1,6 @@
 package heliGame;
 
-import heliGame.Helicopter.CanvasStates;
+//import heliGame.Helicopter.CanvasStates;
 import heliGame.Helicopter.MovementStates;
 import heliGame.Helicopter.ThrottleStates;
 import heliGame.Level.LevelNotLoadedException;
@@ -31,11 +31,19 @@ public class HeliGameMain extends JFrame {
 	static final int MIDDLE_OF_FRAME = (GAME_WIDTH / 2) - (Helicopter.HELI_WIDTH/2);//the location at which the heli sprite stops moving, and the level starts moving
 
     	// enumerate states of game to make for more readable code
-	static enum gameStates {
-		INITIALIZED, PLAYING, PAUSED, GAMEOVER, NEXTLEVEL, EXPLODING
+	static enum GameStates {
+            INITIALIZED, PLAYING, PAUSED, GAMEOVER, NEXTLEVEL, EXPLODING, WIN
 	}
-		
-	static gameStates gameState; //current state of the game
+        
+        public static enum CanvasStates{// the state of the heli with respect to the middle canvas
+            //STATIONARY means the heli is not moving(its in the middle of the canvas), and the level is moving
+            //MOVING_IN_LEFT means it is moving in any direction on the left side of the middle point of the canvas
+            //MOVING_IN_RIGHT means it is moving in any direction on the right side of the middle point of the canvas
+            STATIONARY, MOVING_IN_LEFT, MOVING_IN_RIGHT
+	}
+	
+        private CanvasStates canvasStatus;
+	private GameStates gameState; //current state of the game
 		
 	//define instance variables of game objects
 	private Helicopter heli;
@@ -47,7 +55,7 @@ public class HeliGameMain extends JFrame {
         //other stuff for game
 	private int currentLevelNumber = 1;
 	private int score;
-        private boolean win = false;
+        //private boolean win = false;
 	//Ground groundSprite;
 	
 	//define handler for panels of game
@@ -58,260 +66,272 @@ public class HeliGameMain extends JFrame {
 		
 	//constructor which initializes the game's objects and UI components
 	public HeliGameMain(){
-		init();
-		
-		//set up UI components
-                //this.setContentPane(new JDesktopPane());
-		Container contentPane = this.getContentPane();
-		contentPane.setLayout(new BorderLayout() );
-		gamePanel = new GamePanel();
-		gamePanel.setPreferredSize(new Dimension(GAME_WIDTH,GAME_HEIGHT));
-		contentPane.add(gamePanel,BorderLayout.CENTER);
-		
-		bottomPanel = new JPanel(new FlowLayout());
-		optionsPanel = new OptionsPanel();
-		instrumentPanel = new InstrumentPanel();
-		bottomPanel.add(instrumentPanel);
-		bottomPanel.add(optionsPanel);		
-		contentPane.add(bottomPanel, BorderLayout.SOUTH);
-		
-		this.setTitle("Helicopter Game");
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-                this.setResizable(false);
-                
-		this.pack();
-		this.setVisible(true);
-		
-                helpMenu = new HelpMenu();
-                helpMenu.setLocationRelativeTo(this);
-                
-                gameState = gameStates.PAUSED;
-		start();
+            init();
+
+            //set up UI components
+            //this.setContentPane(new JDesktopPane());
+            Container contentPane = this.getContentPane();
+            contentPane.setLayout(new BorderLayout() );
+            gamePanel = new GamePanel();
+            gamePanel.setPreferredSize(new Dimension(GAME_WIDTH,GAME_HEIGHT));
+            contentPane.add(gamePanel,BorderLayout.CENTER);
+
+            bottomPanel = new JPanel(new FlowLayout());
+            optionsPanel = new OptionsPanel();
+            instrumentPanel = new InstrumentPanel();
+            bottomPanel.add(instrumentPanel);
+            bottomPanel.add(optionsPanel);		
+            contentPane.add(bottomPanel, BorderLayout.SOUTH);
+
+            this.setTitle("Helicopter Game");
+            this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+            this.setResizable(false);
+
+            this.pack();
+            this.setVisible(true);
+
+            helpMenu = new HelpMenu();
+            helpMenu.setLocationRelativeTo(this);
+
+            gameState = GameStates.PAUSED;
+            start();
 	}
 		
 	public void init() {
-		// initialize game objects
-                this.win = false;
-		this.currentLevelNumber = 1;
-		try{
-			currentLevel = new Level(currentLevelNumber);
-		} catch (LevelNotLoadedException e){
-			System.out.println(e);
-			shutdown(1);
-		}
-		
-		this.score = 0;
-		heli = new Helicopter(currentLevel.getStartX(),currentLevel.getStartY());
-                birdExplosion = null;//(re)-set birdExplosion to null so it wont be dranw erraneously 
-		
-		gameState = gameStates.INITIALIZED;
+            // initialize game objects
+            //this.win = false;
+            this.currentLevelNumber = 1;
+            try{
+                currentLevel = new Level(currentLevelNumber);
+            } catch (LevelNotLoadedException e){
+                System.out.println(e);
+                shutdown(1);
+            }
+
+            this.score = 0;
+            heli = new Helicopter(currentLevel.getStartX(),currentLevel.getStartY());
+            
+            if (heli.getX() < MIDDLE_OF_FRAME){
+                canvasStatus = CanvasStates.MOVING_IN_LEFT;
+                heli.setCanvasX(heli.getX());
+            }
+            else if (heli.getX() == MIDDLE_OF_FRAME){
+                canvasStatus = CanvasStates.STATIONARY;
+                heli.setCanvasX(heli.getX());
+            }
+            else{
+                canvasStatus = CanvasStates.STATIONARY;
+                heli.setCanvasX(MIDDLE_OF_FRAME);
+            }
+            birdExplosion = null;//(re)-set birdExplosion to null so it wont be drawn erraneously 
+
+            gameState = GameStates.INITIALIZED;
 	}
 	
 	public void shutdown(int status){
-		System.exit(status);
+            System.exit(status);
 	}
 	
 	public void start(){
-		Thread gameThread = new Thread() {
-			@Override
-			public void run(){
-				loop();
-			}
-		};
-		
-		gameThread.start();
+            Thread gameThread = new Thread() {
+                @Override
+                public void run(){
+                    loop();
+                }
+            };
+
+            gameThread.start();
 	}
 	
 	private void loop(){
-		long startTime, timeTaken, timeLeft;
-		
-		
-		if (gameState == gameStates.INITIALIZED) {
-			gameState = gameStates.PLAYING;
-		}
-		else if (gameState == gameStates.GAMEOVER){
-			init();//regenerate game objects for new game
-			gameState = gameStates.PLAYING;
-		}
-		
-		//loop for game
-		while (true){
-			startTime = System.nanoTime();
-			if (gameState == gameStates.GAMEOVER){
-				//TODO: do stuff for gameover
-				break; //get out of main game loop if game is over
-			}
-			if (gameState == gameStates.EXPLODING){
-				if (heliExplosion.doneExploding()){
-					gameState = gameStates.GAMEOVER;
-				}
-				else{
-					heliExplosion.updateExplosion();
-                                        if (birdExplosion != null){
-                                            birdExplosion.updateExplosion();
-                                        }
-					currentLevel.updateLevel();
-				}
-			}
-			if (gameState == gameStates.PLAYING){
-				//update state of all game objects
-				updateGame();
-			}
-			if (gameState == gameStates.NEXTLEVEL){
-				if (currentLevelNumber >= NUM_LEVELS){
-					win = true;
-                                        gameOverMessage = new GameOverMessage("All Levels Completed");
-                                        gameState = gameStates.GAMEOVER;
-				}
-				else{
-					currentLevelNumber ++;
-					try {
-						currentLevel = new Level(currentLevelNumber);
-					} catch (LevelNotLoadedException e) {
-						e.printStackTrace();
-						shutdown(1);//exit out of the program 
-					}
+            long startTime, timeTaken, timeLeft;
 
-					heli = new Helicopter(currentLevel.getStartX(),currentLevel.getStartY());
-					gameState = gameStates.PLAYING;
-				}
-			}
-			repaint();//refresh the frame; re-calls the paintComponent methods of each panel in the main frame
-			
-			//find out how long to sleep to keep the game refreshing at REFRESH_RATE
-			timeTaken = System.nanoTime() - startTime;
-			timeLeft = (UPDATE_PERIOD - timeTaken) / 1000000L;  // in milliseconds
-			if (timeLeft < 10){
-				timeLeft = 10;  //set a minimum amount of time to sleep
-			}
-			try{
-				Thread.sleep(timeLeft);//let other threads do thier stuff (like input thread)
-			} catch(InterruptedException ex){}
-		}
-		
+
+            if (gameState == GameStates.INITIALIZED) {
+                gameState = GameStates.PLAYING;
+            }
+            else if (gameState == GameStates.GAMEOVER || 
+                     gameState == GameStates.WIN){
+                init();//regenerate game objects for new game
+                gameState = GameStates.PLAYING;
+            }
+
+            //loop for game
+            while (true){
+                startTime = System.nanoTime();
+                if (gameState == GameStates.GAMEOVER ||
+                    gameState == GameStates.WIN){
+                    break; //get out of main game loop if game is over
+                }
+                if (gameState == GameStates.EXPLODING){
+                    if (heliExplosion.doneExploding()){//check to see if the explosion animation is done yet
+                        gameState = GameStates.GAMEOVER;
+                    }
+                    else{
+                        heliExplosion.updateExplosion();
+                        if (birdExplosion != null){
+                            birdExplosion.updateExplosion();
+                        }
+                        currentLevel.updateLevel();
+                    }
+                }
+                if (gameState == GameStates.PLAYING){
+                    //update state of all game objects
+                    updateGame();
+                }
+                if (gameState == GameStates.NEXTLEVEL){
+                    if (currentLevelNumber == NUM_LEVELS){
+                        //win = true;
+                        //gameState = GameStates.GAMEOVER;
+                        gameOverMessage = new GameOverMessage("All Levels Completed");
+                        gameState = GameStates.WIN;
+                    }
+                    else{
+                        currentLevelNumber ++;
+                        try {
+                            currentLevel = new Level(currentLevelNumber);
+                        } catch (LevelNotLoadedException e) {
+                            e.printStackTrace();
+                            shutdown(1);//exit out of the program 
+                        }
+
+                        heli = new Helicopter(currentLevel.getStartX(),currentLevel.getStartY());
+                        gameState = GameStates.PLAYING;
+                    }
+                }
+                repaint();//refresh the frame; re-calls the paintComponent methods of each panel in the main frame
+
+                //find out how long to sleep to keep the game refreshing at REFRESH_RATE
+                timeTaken = System.nanoTime() - startTime;
+                timeLeft = (UPDATE_PERIOD - timeTaken) / 1000000L;  // in milliseconds
+                if (timeLeft < 10){
+                    timeLeft = 10;  //set a minimum amount of time to sleep
+                }
+                try{
+                    Thread.sleep(timeLeft);//let other threads do thier stuff (like input thread)
+                } 
+                catch(InterruptedException ex){
+                }
+            }//end main loop
+
 	}
 	
 	public void updateGame() {
-		// TODO update state of all game objects
-		
-		
-		
-		heli.updateHeli();//update y and x of heli in total game plane
-		currentLevel.updateLevel();
-		updateCanvas();
-		instrumentPanel.updateInstrumentPanel();
-
-		collisionDetection();
+            heli.updateHeli();//update y and x of heli in total game plane
+            currentLevel.updateLevel();
+            updateCanvas();
+            instrumentPanel.updateInstrumentPanel();
+            collisionDetection();
 		
 	}
 	
 	private void updateCanvas(){
-		//----------check to see if heli is right at beginning or right at end of level--------------
-		//at these points, the heli and background will swap movement states; the background stops moving
-		//and the heli starts moving, or vice versa
-	
-		if (heli.willCrossBeginningChange()){
-			if (heli.getXSpeed() > 0){//it is moving to the right
-				heli.setCanvasX(MIDDLE_OF_FRAME);
-				currentLevel.setXSpeed(heli.getXSpeed());
-				heli.setCanvasStatus(CanvasStates.STATIONARY);
-			}
-			else if (heli.getXSpeed() < 0){//it is moving to the left
-				heli.setCanvasX(heli.getX());
-				currentLevel.setXSpeed(0);
-				heli.setCanvasStatus(CanvasStates.MOVING_IN_LEFT);
-			}
-		}
-		else if (heli.willCrossEndChange(currentLevel.getLevelLength())){
-			if (heli.getXSpeed() > 0){
-				heli.setCanvasX(GAME_WIDTH - (currentLevel.getLevelLength() - heli.getX()));
-				currentLevel.setXSpeed(0);
-				heli.setCanvasStatus(CanvasStates.MOVING_IN_RIGHT);
-			}
-			else if (heli.getXSpeed() < 0){
-				heli.setCanvasX(MIDDLE_OF_FRAME);
-				currentLevel.setXSpeed(heli.getXSpeed());
-				heli.setCanvasStatus(CanvasStates.STATIONARY);
-			}
-		}
-		else{//wont cross anywhere
-			switch(heli.getCanvasStatus()){
-				case STATIONARY:
-                                        //don't need to update the heli's canvas x,
-                                        //because the background is moving, not the heli
-					break;
-				case MOVING_IN_RIGHT:
-					heli.setCanvasX(GAME_WIDTH - (currentLevel.getLevelLength() - heli.getX()));
-					break;
-				case MOVING_IN_LEFT:
-					heli.setCanvasX(heli.getX());
-					break;
-			}
-		}
-		
-		//------------------------------accelerate heli if falling-------------
-		if (heli.willCrossAccelerationPoint()){
-			heli.setYSpeed(heli.getYSpeed() - 1);
-			heli.setFallYTop(heli.getY() );
-		}
-		
-		//------------------------------keep heli confined in canvas-------------------
-		if (heli.willCrossSideOfCanvas(currentLevel.getLevelLength()) ){
-			if (heli.getXSpeed() > 0){//its going to cross at the end
-				heli.setX(currentLevel.getLevelLength() - Helicopter.HELI_WIDTH);
-				heli.setCanvasX(GAME_WIDTH - Helicopter.HELI_WIDTH);
-				heli.setXSpeed(0);
-				heli.setTheta(0);
-			}
-			else{//its going to cross at the beginning
-				heli.setX(0);
-				heli.setCanvasX(0);
-				heli.setXSpeed(0);		
-				heli.setTheta(0);
-			}
-		}
-		
-		if (heli.willCrossTopOfCanvas()){
-			heli.setYSpeed(0);
-			heli.setY(0);
-		}
-		else if (heli.willCrossBottomOfCanvas()){
-			heli.setYSpeed(0);
-			heli.setY(GAME_HEIGHT - Helicopter.HELI_HEIGHT);
-		}
-		
-		//---------------sync the level drawing and the heli if they become unsynced------------------
-		//TODO: fix this hack
-		//fix level not drawing correctly at speed 3
-		//caused by rounding error (integer division)?
-		switch (heli.getCanvasStatus()){
-			case STATIONARY:
-				break;
-			case MOVING_IN_RIGHT:
-				if(currentLevel.getCurrentX() != 
-				   (currentLevel.getLevelLength() - GAME_WIDTH)){
-					currentLevel.setCurrentX(currentLevel.getLevelLength() - GAME_WIDTH);
-				}
-				break;
-			case MOVING_IN_LEFT:
-				if(currentLevel.getCurrentX() != 0){
-					currentLevel.setCurrentX(0);
-				}
-				break; 
-		}
+            //----------check to see if heli is right at beginning or right at end of level--------------
+            //at these points, the heli and background will swap movement states; the background stops moving
+            //and the heli starts moving, or vice versa
+
+            if (heli.willCrossBeginningChange()){
+                if (heli.getXSpeed() > 0){//it is moving to the right
+                    heli.setCanvasX(MIDDLE_OF_FRAME);
+                    currentLevel.setXSpeed(heli.getXSpeed());
+                    canvasStatus = CanvasStates.STATIONARY;
+                }
+                else if (heli.getXSpeed() < 0){//it is moving to the left
+                    heli.setCanvasX(heli.getX());
+                    currentLevel.setXSpeed(0);
+                    canvasStatus = CanvasStates.MOVING_IN_LEFT;
+                }
+            }
+            else if (heli.willCrossEndChange(currentLevel.getLevelLength())){
+                if (heli.getXSpeed() > 0){
+                    heli.setCanvasX(GAME_WIDTH - (currentLevel.getLevelLength() - heli.getX()));
+                    currentLevel.setXSpeed(0);
+                    canvasStatus = CanvasStates.MOVING_IN_RIGHT;
+                }
+                else if (heli.getXSpeed() < 0){
+                    heli.setCanvasX(MIDDLE_OF_FRAME);
+                    currentLevel.setXSpeed(heli.getXSpeed());
+                    canvasStatus = CanvasStates.STATIONARY;
+                }
+            }
+            else{//wont cross anywhere
+                switch(canvasStatus){
+                    case STATIONARY:
+                        //don't need to update the heli's canvas x,
+                        //because the background is moving, not the heli
+                        break;
+                    case MOVING_IN_RIGHT:
+                        heli.setCanvasX(GAME_WIDTH - (currentLevel.getLevelLength() - heli.getX()));
+                        break;
+                    case MOVING_IN_LEFT:
+                        heli.setCanvasX(heli.getX());
+                        break;
+            }
+        }
+
+            //------------------------------accelerate heli if falling-------------
+            if (heli.willCrossAccelerationPoint()){
+                    heli.setYSpeed(heli.getYSpeed() - 1);
+                    heli.setFallYTop(heli.getY() );
+            }
+
+            //------------------------------keep heli confined in canvas-------------------
+            if (heli.willCrossSideOfCanvas(currentLevel.getLevelLength()) ){
+                if (heli.getXSpeed() > 0){//its going to cross at the end
+                    heli.setX(currentLevel.getLevelLength() - Helicopter.HELI_WIDTH);
+                    heli.setCanvasX(GAME_WIDTH - Helicopter.HELI_WIDTH);
+                    heli.setXSpeed(0);
+                    heli.setTheta(0);
+                }
+                else{//its going to cross at the beginning
+                    heli.setX(0);
+                    heli.setCanvasX(0);
+                    heli.setXSpeed(0);		
+                    heli.setTheta(0);
+                }
+            }
+
+            if (heli.willCrossTopOfCanvas()){
+                heli.setYSpeed(0);
+                heli.setY(0);
+            }
+            else if (heli.willCrossBottomOfCanvas()){
+                heli.setYSpeed(0);
+                heli.setY(GAME_HEIGHT - Helicopter.HELI_HEIGHT);
+            }
+
+            //---------------sync the level drawing and the heli if they become unsynced------------------
+            //TODO: fix this hack
+            //fix level not drawing correctly at speed 3
+            //caused by rounding error (integer division)?
+            switch (canvasStatus){
+                case STATIONARY:
+                    break;
+                case MOVING_IN_RIGHT:
+                    if(currentLevel.getCurrentX() != 
+                       (currentLevel.getLevelLength() - GAME_WIDTH)){
+                            currentLevel.setCurrentX(currentLevel.getLevelLength() - GAME_WIDTH);
+                    }
+                    break;
+                case MOVING_IN_LEFT:
+                    if(currentLevel.getCurrentX() != 0){
+                            currentLevel.setCurrentX(0);
+                    }
+                    break; 
+            }
 		
 	}
 	public void collisionDetection() {
 		
-		checkTreeCollision();
-		checkBirdCollision();
-		checkRingCollision();
-		checkGroundCollision();
-                
-                //---------------------------check to see if within finish line------------------
-                if (heli.isLanded() && currentLevel.getFinishLine().contains((Rectangle2D)heli.getCollisionShape())){
-                    gameState = gameStates.NEXTLEVEL;
-                }
+            checkTreeCollision();
+            checkBirdCollision();
+            checkRingCollision();
+            checkGroundCollision();
+
+            //---------------------------check to see if within finish line------------------
+            if (heli.isLanded() && currentLevel.getFinishLine().contains((Rectangle2D)heli.getCollisionShape())){
+                gameState = GameStates.NEXTLEVEL;
+            }
 	}
 
         private void checkTreeCollision() {
@@ -321,7 +341,7 @@ public class HeliGameMain extends JFrame {
                 if (currentLevel.getTreeList().get(treeNum).getX() >= (currentLevel.getCurrentX() - Tree.CANOPY_RADIUS * 2) &&
                     currentLevel.getTreeList().get(treeNum).getX() <= (currentLevel.getCurrentX() + GAME_WIDTH)){//only need to check visible trees
                     if (currentLevel.getTreeList().get(treeNum).intersects((Rectangle2D)heli.getCollisionShape())){
-                        gameState = gameStates.EXPLODING;
+                        gameState = GameStates.EXPLODING;
                         gameOverMessage = new GameOverMessage("Collision With Tree");
                         heliExplosion = new Explosion(heli.getCanvasX(),
                                                       heli.getY(),
@@ -354,7 +374,7 @@ public class HeliGameMain extends JFrame {
                             case NO_LIFT://if the rotor is spinning and
                             case HOVER:  //a bird collides with it, 
                             case LIFT:   //you're gonna have a bad time
-                                gameState = gameStates.EXPLODING;
+                                gameState = GameStates.EXPLODING;
                                 gameOverMessage = new GameOverMessage("Fatal Collision With Bird");
                                 currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
                                 birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getCanvasX()
@@ -409,7 +429,7 @@ public class HeliGameMain extends JFrame {
                         
                     //gameState = gameStates.GAMEOVER;
                     gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-                    gameState = gameStates.EXPLODING;
+                    gameState = GameStates.EXPLODING;
                     heliExplosion = new Explosion(heli.getCanvasX(),
                                                   heli.getY(),
                                                   Helicopter.HELI_WIDTH + 20,
@@ -423,7 +443,7 @@ public class HeliGameMain extends JFrame {
                     if (heli.getYSpeed() < (Helicopter.MAX_Y_LANDING_SPEED)){
                         //gameState = gameStates.GAMEOVER;
                         gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-                        gameState = gameStates.EXPLODING;
+                        gameState = GameStates.EXPLODING;
                         heliExplosion = new Explosion(heli.getCanvasX(),
                                                       heli.getY(),
                                                       Helicopter.HELI_WIDTH + 20,
@@ -450,77 +470,77 @@ public class HeliGameMain extends JFrame {
             //check to see if the heli is starting to move into the ground and correct that
             if (currentLevel.getGround().containsPoint(heli.getX(),
                                                        heli.getY() + (Helicopter.HELI_HEIGHT - 1))){//heli is moving into ground in -x direction
-                    if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
-                            heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
-                            gameState = gameStates.EXPLODING;
-                            gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-                            heliExplosion = new Explosion(heli.getCanvasX(),
-                                                          heli.getY(),
-                                                          Helicopter.HELI_WIDTH + 20,
-                                                          Helicopter.HELI_HEIGHT + 20);
-                            currentLevel.setXSpeed(0);
-                    }
-                    else{
-                            //stop it moving
-                            heli.setYSpeed(0);
-                            heli.setXSpeed(0);
-                            heli.setTheta(0);//reset the angle it is at
-                            heli.setLanded(true);
-                            heli.setY(heli.getY() - 1);
+                if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
+                    heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
+                    gameState = GameStates.EXPLODING;
+                    gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
+                    heliExplosion = new Explosion(heli.getCanvasX(),
+                                                  heli.getY(),
+                                                  Helicopter.HELI_WIDTH + 20,
+                                                  Helicopter.HELI_HEIGHT + 20);
+                    currentLevel.setXSpeed(0);
+                }
+                else{
+                    //stop it moving
+                    heli.setYSpeed(0);
+                    heli.setXSpeed(0);
+                    heli.setTheta(0);//reset the angle it is at
+                    heli.setLanded(true);
+                    heli.setY(heli.getY() - 1);
 
-                            currentLevel.setXSpeed(0);
-                            if (DEBUG){
-                                    System.out.println("Correction applied");
-                            }
-
-                            //heli.setX(heli.getX() + 3);
-                            //switch (heli.getCanvasStatus()){
-                            //	case STATIONARY:
-                            //		//move currectX in level to sync the part of the level which is drawm
-                            //		currentLevel.setCurrentX(currentLevel.getCurrentX() + 3);
-                            //		break;
-                            //	case MOVING_IN_LEFT:
-                            //	case MOVING_IN_RIGHT:
-                            //		//dont need to apply this correction if the heli's x is actually changing
-                            //		break;
-                            //}
+                    currentLevel.setXSpeed(0);
+                    if (DEBUG){
+                        System.out.println("Correction applied");
                     }
+
+                    //heli.setX(heli.getX() + 3);
+                    //switch (heli.getCanvasStatus()){
+                    //	case STATIONARY:
+                    //		//move currectX in level to sync the part of the level which is drawm
+                    //		currentLevel.setCurrentX(currentLevel.getCurrentX() + 3);
+                    //		break;
+                    //	case MOVING_IN_LEFT:
+                    //	case MOVING_IN_RIGHT:
+                    //		//dont need to apply this correction if the heli's x is actually changing
+                    //		break;
+                    //}
+                }
             }
             else if (currentLevel.getGround().containsPoint(heli.getX() + Helicopter.HELI_WIDTH,
                                                             heli.getY() + (Helicopter.HELI_HEIGHT - 1))){//heli is moving into ground in +x direction
-                    if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
-                                    heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
-                                    gameState = gameStates.EXPLODING;
-                                    gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-                                    heliExplosion = new Explosion(heli.getCanvasX(),
-                                                                  heli.getY(),
-                                                                  Helicopter.HELI_WIDTH,
-                                                                  Helicopter.HELI_HEIGHT);
-                                    currentLevel.setXSpeed(0);
-                            }
-                    else{
-                            heli.setYSpeed(0);
-                            heli.setXSpeed(0);
-                            heli.setY(heli.getY() - 1);
-                            heli.setLanded(true);
-                            heli.setTheta(0);
+                if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
+                     heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
+                    gameState = GameStates.EXPLODING;
+                    gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
+                    heliExplosion = new Explosion(heli.getCanvasX(),
+                                                  heli.getY(),
+                                                  Helicopter.HELI_WIDTH,
+                                                  Helicopter.HELI_HEIGHT);
+                    currentLevel.setXSpeed(0);
+                }
+                else{
+                    heli.setYSpeed(0);
+                    heli.setXSpeed(0);
+                    heli.setY(heli.getY() - 1);
+                    heli.setLanded(true);
+                    heli.setTheta(0);
 
-                            currentLevel.setXSpeed(0);
+                    currentLevel.setXSpeed(0);
 
-                            if (DEBUG){
-                                    System.out.println("Correction applied");
-                            }
-
-                            //heli.setX(heli.getX() - 3);
-                            //switch (heli.getCanvasStatus()){
-                            //case STATIONARY:
-                            //	currentLevel.setCurrentX(currentLevel.getCurrentX() - 3);
-                            //	break;
-                            //case MOVING_IN_LEFT:
-                            //case MOVING_IN_RIGHT:
-                            //	break;
-                            //}
+                    if (DEBUG){
+                        System.out.println("Correction applied");
                     }
+
+                    //heli.setX(heli.getX() - 3);
+                    //switch (heli.getCanvasStatus()){
+                    //case STATIONARY:
+                    //	currentLevel.setCurrentX(currentLevel.getCurrentX() - 3);
+                    //	break;
+                    //case MOVING_IN_LEFT:
+                    //case MOVING_IN_RIGHT:
+                    //	break;
+                    //}
+                }
             }
         }
         
@@ -542,13 +562,20 @@ public class HeliGameMain extends JFrame {
                     break;
                 case GAMEOVER:
                     currentLevel.drawVisibleLevel(g);
+                    gameOverMessage.draw(g);
+                    /*
                     if (win){
                         heli.drawSprite(g);
                         gameOverMessage.draw(g);
                     }
                     else{
                         gameOverMessage.draw(g);
-                    }
+                    }*/
+                    break;
+                case WIN:
+                    currentLevel.drawVisibleLevel(g);
+                    heli.drawSprite(g);
+                    gameOverMessage.draw(g);
                     break;
             }
 	}
@@ -570,7 +597,7 @@ public class HeliGameMain extends JFrame {
                 //----------------process left button pressed-------------------
                 case KeyEvent.VK_LEFT:
                 case KeyEvent.VK_A://process 'a' pressed
-                    if (gameState == gameStates.PLAYING){
+                    if (gameState == GameStates.PLAYING){
                         switch (heli.getThrottleStatus()){
                             case IDLE://do nothing
                                 break;
@@ -589,7 +616,7 @@ public class HeliGameMain extends JFrame {
                     //----------------process right button pressed-------------------
                 case KeyEvent.VK_RIGHT:
                 case KeyEvent.VK_D://process 'd' pressed
-                    if (gameState == gameStates.PLAYING){
+                    if (gameState == GameStates.PLAYING){
                         switch (heli.getThrottleStatus()){
                             case IDLE://do nothing
                                 break;
@@ -617,7 +644,7 @@ public class HeliGameMain extends JFrame {
 	}
 	
         private void processThrottleUp(){
-            if (gameState == gameStates.PLAYING){
+            if (gameState == GameStates.PLAYING){
                 switch (heli.getThrottleStatus()){
                     case IDLE:
                         heli.setThrottleStatus(ThrottleStates.NO_LIFT);
@@ -653,7 +680,7 @@ public class HeliGameMain extends JFrame {
         }
         
         private void processThrottleDown(){
-            if (gameState == gameStates.PLAYING){
+            if (gameState == GameStates.PLAYING){
                 switch (heli.getThrottleStatus()){
                     case IDLE:
                         //do nothing if its already idle
@@ -716,7 +743,7 @@ public class HeliGameMain extends JFrame {
                     //dont do anything if it is turning
             }
             else{
-                switch (heli.getCanvasStatus()){
+                switch (canvasStatus){
                     case STATIONARY:
                         if (heli.getXSpeed() > 0){//it is moving to the right
                             heli.setXSpeed(heli.getXSpeed() - 1);//reduce its speed by 1
@@ -781,7 +808,7 @@ public class HeliGameMain extends JFrame {
                 //dont do anything if it is currently turning
             }
             else{
-                switch (heli.getCanvasStatus()){
+                switch (canvasStatus){
                     case STATIONARY:
                         if (heli.getXSpeed() < 0){//it is moving to the left
                             heli.setXSpeed(heli.getXSpeed() + 1);//reduce its speed by 1
@@ -832,7 +859,7 @@ public class HeliGameMain extends JFrame {
         private void processHelpPressed(){
             switch (gameState){
                 case PLAYING:
-                    gameState = gameStates.PAUSED;
+                    gameState = GameStates.PAUSED;
                     if (helpMenu.isVisible()){
                         helpMenu.setVisible(false);
                     }
@@ -842,6 +869,7 @@ public class HeliGameMain extends JFrame {
                     break;
                 case PAUSED:
                 case GAMEOVER:
+                case WIN:
                     if (helpMenu.isVisible()){
                         helpMenu.setVisible(false);
                     }
@@ -855,41 +883,18 @@ public class HeliGameMain extends JFrame {
         private void processPausePressed(){
             switch (gameState){
                 case PLAYING:
-                    gameState = gameStates.PAUSED;
+                    gameState = GameStates.PAUSED;
                     break;
                 case PAUSED:
-                    gameState = gameStates.PLAYING;
+                    gameState = GameStates.PLAYING;
                     break;
                 case GAMEOVER:
+                case WIN:    
                     start();
                     break;
             }
         }
         
-	/*
-	private static boolean heliWillMoveCanvasX(){
-		if (heli.getX() < MIDDLE_OF_FRAME ){
-			return true;
-		}
-		else if (heli.getX() > (currentLevel.getLevelLength() - MIDDLE_OF_FRAME)){
-			//if (heli.getXSpeed() > 0){
-				return true;
-			//}
-			//else{
-				//return false;
-			//}
-		}/*
-		else if (heli.getX() == ((GAME_WIDTH / 2) - (heli.HELI_WIDTH/2)) ||
-				heli.getX() == (currentLevel.getLevelLength() - (GAME_WIDTH / 2)) ){
-			return false;
-		}*
-		else{
-			return false;
-		}
-	}*/
-	
-	
-	
 	
 	//--------------------------Panels which make up the game's UI---------------------------
 	//-----setup as inner classes to make accessing instances of game objects easier----------
@@ -988,8 +993,10 @@ public class HeliGameMain extends JFrame {
 			scoreLbl.setText(""+score);
 			
 			//-------for debug------------
-			heliPosDebug.setText("("+heli.getX()+","+heli.getY()+")");                    //TODO: remove (debug only)
-			levelDebug.setText("("+currentLevel.getCurrentX()+","+currentLevel.getXSpeed()+")");                      //TODO: remove (debug only)
+                        if (DEBUG){
+                            heliPosDebug.setText("("+heli.getX()+","+heli.getY()+")");                    
+                            levelDebug.setText("("+currentLevel.getCurrentX()+","+currentLevel.getXSpeed()+")");                      
+                        }
 		}
 		
 	}
@@ -1051,11 +1058,12 @@ public class HeliGameMain extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         HeliGameMain.HelpMenu.this.setVisible(false);
-                        if (gameState == gameStates.GAMEOVER){
+                        if (gameState == GameStates.GAMEOVER || 
+                            gameState == GameStates.WIN){
                             start();
                         }
                         else{
-                            gameState = gameStates.PLAYING;
+                            gameState = GameStates.PLAYING;
                         }
                     }
                 });

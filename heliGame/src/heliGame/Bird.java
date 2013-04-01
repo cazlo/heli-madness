@@ -27,31 +27,36 @@ public class Bird extends Sprite {
 	//----------------------------stuff for animation-------------------------------
 	private static final int [] birdAnimImageNumbers = {1,2,3};
 	private static final String birdAnimLocation = "images/bird/birdFrame";
-	private static int birdAnimDelay = MAX_BIRDS * 10;
-	private static AnimationUtils birdAnim;
+	private static int birdAnimDelay = 10;//MAX_BIRDS * 10;
+	//private static AnimationUtils birdAnim;
+        private AnimationUtils birdAnim;
 	
 	//--------------constructor--------------
-	Bird(int xIn,int yIn, boolean initAnimation){
+	Bird(int xIn,int yIn){//, boolean initAnimation){
                 super(xIn,yIn);
+                
+                Random rng = new Random();//for random speed and frame of animation
+                
                 if(HeliGameMain.DEBUG){
                         Bird.MAX_BIRDS = MAX_BIRDS_DEBUG;
-                        birdAnimDelay = MAX_BIRDS * 10;
+                        //birdAnimDelay = MAX_BIRDS * 10;
                 }
                 else{
                         Bird.MAX_BIRDS = MAX_BIRDS_NORMAL;
-                        birdAnimDelay = MAX_BIRDS * 10;
+                        //birdAnimDelay = MAX_BIRDS * 10;
                 }
                 
-		if (initAnimation){
-			birdAnim = new AnimationUtils(birdAnimImageNumbers.length,
-                                                  birdAnimLocation,
-                                                  birdAnimImageNumbers,
-                                                  ".png",
-                                                  birdAnimDelay,
-                                                  AnimationUtils.LoopTypes.LOOP_FOREVER );
-		}
+		//if (initAnimation){
+		birdAnim = new AnimationUtils(birdAnimImageNumbers.length,
+                                              birdAnimLocation,
+                                              birdAnimImageNumbers,
+                                              ".png",
+                                              birdAnimDelay,
+                                              AnimationUtils.LoopTypes.LOOP_FOREVER );
+		//}
+                birdAnim.setCurrentFrame(birdAnimImageNumbers[rng.nextInt(birdAnimImageNumbers.length - 1)]);
 		//this.setXSpeed(-1);
-		this.setXSpeed(0-(new Random().nextInt(MAX_SPEED) + 1));//random speed birds in 1 direction
+		this.setXSpeed(0-(rng.nextInt(MAX_SPEED) + 1));//random speed birds in 1 direction
 		this.setInitialY(yIn);
 		this.generateCollisionShape();
 	}
@@ -93,10 +98,14 @@ public class Bird extends Sprite {
 	public void updateBird(){
 		//this.setX(this.getX() + this.getXSpeed());
 		updateSprite();
-		birdAnim.updateImageAnimation();
+		//this.birdAnim.updateImageAnimation();
 		//generateCollisionShape();//re-generate a new shape at its new location
 		this.getCollisionRectangle2D().setRect(this.getX(),this.getY(),BIRD_WIDTH,BIRD_HEIGHT);
 	}
+        
+        public void updateBirdAnimation(){
+            this.birdAnim.updateImageAnimation();
+        }
 
 	//---------------------drawing stuff----------------------
 	@Override
