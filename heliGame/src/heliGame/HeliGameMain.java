@@ -541,12 +541,9 @@ public class HeliGameMain extends JFrame {
                     heliExplosion.drawSprite(g);
                     break;
                 case GAMEOVER:
-                    //TODO: Draw stuff for gameover
-                    //heli.drawSprite(g);
                     currentLevel.drawVisibleLevel(g);
                     if (win){
                         heli.drawSprite(g);
-                        //TODO: draw something for win
                         gameOverMessage.draw(g);
                     }
                     else{
@@ -558,292 +555,317 @@ public class HeliGameMain extends JFrame {
 	
 	//update state of game objects on key press
 	public void processKeyPress(int keyCode){
-		switch(keyCode){
-			case KeyEvent.VK_UP: 
-			case KeyEvent.VK_W:	// process w pressed; throttle up
-				//w is equivalent to throttle up
-				if (gameState == gameStates.PLAYING){
-					switch (heli.getThrottleStatus()){
-						case IDLE:
-							heli.setThrottleStatus(ThrottleStates.NO_LIFT);
-							
-							if (heli.getMovementStatus() == MovementStates.STATIC_LEFT){
-								heli.setMovementStatus(MovementStates.MOVING_LEFT);
-							}
-							else if (heli.getMovementStatus() == MovementStates.STATIC_RIGHT){
-								heli.setMovementStatus(MovementStates.MOVING_RIGHT);
-							}
-							
-							if (heli.getYSpeed() < 0){//heli is falling
-								heli.setYSpeed(Helicopter.MAX_Y_LANDING_SPEED);
-								heli.setFallYTop(20000);
-							}
-							break;
-						case NO_LIFT:
-							heli.setThrottleStatus(ThrottleStates.HOVER);
-							heli.setYSpeed(0);
-							break;
-						case HOVER:
-							heli.setThrottleStatus(ThrottleStates.LIFT);
-							heli.setYSpeed(1);
-							heli.setLanded(false);
-							break;
-						case LIFT:
-							if (heli.getYSpeed() < Helicopter.MAX_Y_SPEED){
-								heli.setYSpeed(heli.getYSpeed() + 1);
-							}
-							break;
-					}
-				}
-				break;
-			case KeyEvent.VK_DOWN:
-			case KeyEvent.VK_S://process s pressed; throttle down
-				if (gameState == gameStates.PLAYING){
-					switch (heli.getThrottleStatus()){
-						case IDLE:
-							break;
-						case NO_LIFT:
-							heli.setThrottleStatus(ThrottleStates.IDLE);
-							
-							if (heli.getMovementStatus() == MovementStates.MOVING_LEFT){
-								heli.setMovementStatus(MovementStates.STATIC_LEFT);
-							}
-							else if (heli.getMovementStatus() == MovementStates.MOVING_RIGHT){
-								heli.setMovementStatus(MovementStates.STATIC_RIGHT);
-							}
-							
-							if (heli.isLanded()){
-								//dont do anything speed releated if it is landed
-							}
-							else{//not on ground
-								if (heli.willCrossBottomOfCanvas()){
-									heli.setYSpeed(0);
-								}
-								else{
-									heli.setYSpeed(-2);
-									heli.setFallYTop(heli.getY());//get the height for which it starts to autogyro
-								}
-							}
-							break;
-						case HOVER:
-							heli.setThrottleStatus(ThrottleStates.NO_LIFT);
-							
-							if (heli.willCrossBottomOfCanvas()){
-								heli.setYSpeed(0);
-							}
-							else{
-								heli.setYSpeed(-1);
-							}
-							break;
-						case LIFT:
-							heli.setThrottleStatus(ThrottleStates.HOVER);
-							heli.setYSpeed(0);
-							break;
-					}
-				}
-				break;
-			case KeyEvent.VK_LEFT:
-			case KeyEvent.VK_A://process 'a' pressed
-				if (gameState == gameStates.PLAYING){
-					switch (heli.getThrottleStatus()){
-						case IDLE://do nothing
-							break;
-						case NO_LIFT:
-							if (!heli.isLanded()){
-								processLeftPressed();
-							}
-							break;
-						case HOVER:
-						case LIFT:
-							processLeftPressed();
-							break;
-					}
-				}
-				break;
-			case KeyEvent.VK_RIGHT:
-			case KeyEvent.VK_D://process 'd' pressed
-				if (gameState == gameStates.PLAYING){
-					switch (heli.getThrottleStatus()){
-						case IDLE://do nothing
-							break;
-						case NO_LIFT:
-							if (!heli.isLanded()){
-								processRightPressed();
-							}
-							break;
-						case HOVER:
-						case LIFT:
-							processRightPressed();
-							break;
-					}
-				}
-				break;
-			case KeyEvent.VK_H:
-				switch (gameState){
-					case PLAYING:
-						gameState = gameStates.PAUSED;
-                                                if (helpMenu.isVisible()){
-                                                    helpMenu.setVisible(false);
-                                                }
-                                                else{
-                                                    helpMenu.setVisible(true);
-                                                }
-						break;
-					case PAUSED:
-					case GAMEOVER:
-                                                if (helpMenu.isVisible()){
-                                                    helpMenu.setVisible(false);
-                                                }
-                                                else{
-                                                    helpMenu.setVisible(true);
-                                                }
-						break;
-				}
-				break;
-			case KeyEvent.VK_P:
-				switch (gameState){
-					case PLAYING:
-						gameState = gameStates.PAUSED;
-						break;
-					case PAUSED:
-						gameState = gameStates.PLAYING;
-						break;
-					case GAMEOVER:
-						start();
-						break;
-				}
-				break;
-		}
+            switch(keyCode){
+                //----------------process throttle up button pressed-------------------
+                case KeyEvent.VK_UP: 
+                case KeyEvent.VK_W:	
+                    //w and up key are equivalent to throttle up
+                    processThrottleUp();
+                    break;
+                //----------------process throttle down button pressed-------------------
+                case KeyEvent.VK_DOWN:
+                case KeyEvent.VK_S://process s pressed; throttle down
+                    processThrottleDown();    
+                    break;
+                //----------------process left button pressed-------------------
+                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_A://process 'a' pressed
+                    if (gameState == gameStates.PLAYING){
+                        switch (heli.getThrottleStatus()){
+                            case IDLE://do nothing
+                                break;
+                            case NO_LIFT:
+                                if (!heli.isLanded()){
+                                    processLeftPressed();
+                                }
+                                break;
+                            case HOVER:
+                            case LIFT:
+                                processLeftPressed();
+                                break;
+                        }
+                    }
+                    break;
+                    //----------------process right button pressed-------------------
+                case KeyEvent.VK_RIGHT:
+                case KeyEvent.VK_D://process 'd' pressed
+                    if (gameState == gameStates.PLAYING){
+                        switch (heli.getThrottleStatus()){
+                            case IDLE://do nothing
+                                break;
+                            case NO_LIFT:
+                                if (!heli.isLanded()){
+                                    processRightPressed();
+                                }
+                                break;
+                            case HOVER:
+                            case LIFT:
+                                processRightPressed();
+                                break;
+                        }
+                    }
+                    break;
+                //----------------process help button pressed-------------------
+                case KeyEvent.VK_H:
+                    processHelpPressed();
+                    break;
+                //----------------process pause button pressed-------------------    
+                case KeyEvent.VK_P:
+                    processPausePressed();
+                    break;
+            }
 	}
 	
+        private void processThrottleUp(){
+            if (gameState == gameStates.PLAYING){
+                switch (heli.getThrottleStatus()){
+                    case IDLE:
+                        heli.setThrottleStatus(ThrottleStates.NO_LIFT);
+
+                        if (heli.getMovementStatus() == MovementStates.STATIC_LEFT){
+                            heli.setMovementStatus(MovementStates.MOVING_LEFT);
+                        }
+                        else if (heli.getMovementStatus() == MovementStates.STATIC_RIGHT){
+                            heli.setMovementStatus(MovementStates.MOVING_RIGHT);
+                        }
+
+                        if (heli.getYSpeed() < 0){//heli is falling
+                            heli.setYSpeed(Helicopter.MAX_Y_LANDING_SPEED);
+                            heli.setFallYTop(20000);
+                        }
+                        break;
+                    case NO_LIFT:
+                        heli.setThrottleStatus(ThrottleStates.HOVER);
+                        heli.setYSpeed(0);
+                        break;
+                    case HOVER:
+                        heli.setThrottleStatus(ThrottleStates.LIFT);
+                        heli.setYSpeed(1);
+                        heli.setLanded(false);
+                        break;
+                    case LIFT:
+                        if (heli.getYSpeed() < Helicopter.MAX_Y_SPEED){
+                                heli.setYSpeed(heli.getYSpeed() + 1);
+                        }
+                        break;
+                }
+            }    
+        }
+        
+        private void processThrottleDown(){
+            if (gameState == gameStates.PLAYING){
+                switch (heli.getThrottleStatus()){
+                    case IDLE:
+                        //do nothing if its already idle
+                        break;
+                    case NO_LIFT:
+                        heli.setThrottleStatus(ThrottleStates.IDLE);
+
+                        if (heli.getMovementStatus() == MovementStates.MOVING_LEFT){
+                                heli.setMovementStatus(MovementStates.STATIC_LEFT);
+                        }
+                        else if (heli.getMovementStatus() == MovementStates.MOVING_RIGHT){
+                                heli.setMovementStatus(MovementStates.STATIC_RIGHT);
+                        }
+
+                        if (heli.isLanded()){
+                                //dont do anything speed releated if it is landed
+                        }
+                        else{//not on ground
+                                if (heli.willCrossBottomOfCanvas()){
+                                        heli.setYSpeed(0);
+                                }
+                                else{
+                                        heli.setYSpeed(-2);
+                                        heli.setFallYTop(heli.getY());//get the height for which it starts to autogyro
+                                }
+                        }
+                        break;
+                    case HOVER:
+                        heli.setThrottleStatus(ThrottleStates.NO_LIFT);
+
+                        if (heli.willCrossBottomOfCanvas()){
+                            heli.setYSpeed(0);
+                        }
+                        else{
+                            heli.setYSpeed(-1);
+                        }
+                        break;
+                    case LIFT:
+                        heli.setThrottleStatus(ThrottleStates.HOVER);
+                        heli.setYSpeed(0);
+                        break;
+                }
+            }
+        }
+        
 	private void processLeftPressed(){
-		if(heli.isLanded()){
-			heli.setLanded(false);
-		}
-		
-		if (heli.getXSpeed() == 0 &&
-				heli.getMovementStatus() == MovementStates.MOVING_RIGHT){//need to turn it from right to left
-			heli.setMovementStatus(MovementStates.TURNING_R2L);
-			if (DEBUG){
-				System.out.println("switching directions right to left");
-			}
-		}
-		else if (heli.getMovementStatus() == MovementStates.TURNING_L2R ||
-				heli.getMovementStatus() == MovementStates.TURNING_R2L){
-			//dont do anything if it is turning
-		}
-		else{
-			switch (heli.getCanvasStatus()){
-				case STATIONARY:
-					if (heli.getXSpeed() > 0){//it is moving to the right
-						heli.setXSpeed(heli.getXSpeed() - 1);//reduce its speed by 1
-						currentLevel.setXSpeed(heli.getXSpeed());//make level have same speed
-						heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
-					}
-					else{//the speed is negative or 0					
-						if (0-heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
-							heli.setXSpeed(heli.getXSpeed() - 1);
-							currentLevel.setXSpeed(heli.getXSpeed());
-							if (heli.getXSpeed() == 0){
-								heli.setTheta(0);
-							}
-							else {
-								heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
-							}
-						}
-						else{
-							//do nothing if its already at max speed
-						}
-					}
-					break;
-				case MOVING_IN_LEFT://it is moving in the left or right part of the screen
-				case MOVING_IN_RIGHT:
-					if (heli.getXSpeed() > 0){//it is moving to the left
-						heli.setXSpeed(heli.getXSpeed() - 1);//reduce its speed by 1
-						heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
-					}
-					else{//the speed is negative or 0
-						if (0-heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
-							heli.setXSpeed(heli.getXSpeed() - 1);
-							if (heli.getXSpeed() == 0){
-								heli.setTheta(0);
-							}
-							else{
-								heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
-							}
-						}
-						else{
-							//do nothing if its already at max speed
-						}
-					}
-					break;
-			}
-		}
+            if(heli.isLanded()){
+                    heli.setLanded(false);
+            }
+
+            if (heli.getXSpeed() == 0 &&
+                            heli.getMovementStatus() == MovementStates.MOVING_RIGHT){//need to turn it from right to left
+                    heli.setMovementStatus(MovementStates.TURNING_R2L);
+                    if (DEBUG){
+                            System.out.println("switching directions right to left");
+                    }
+            }
+            else if (heli.getMovementStatus() == MovementStates.TURNING_L2R ||
+                     heli.getMovementStatus() == MovementStates.TURNING_R2L){
+                    //dont do anything if it is turning
+            }
+            else{
+                switch (heli.getCanvasStatus()){
+                    case STATIONARY:
+                        if (heli.getXSpeed() > 0){//it is moving to the right
+                            heli.setXSpeed(heli.getXSpeed() - 1);//reduce its speed by 1
+                            currentLevel.setXSpeed(heli.getXSpeed());//make level have same speed
+                            heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
+                        }
+                        else{//the speed is negative or 0					
+                            if (0-heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
+                                heli.setXSpeed(heli.getXSpeed() - 1);
+                                currentLevel.setXSpeed(heli.getXSpeed());
+                                if (heli.getXSpeed() == 0){
+                                        heli.setTheta(0);
+                                }
+                                else {
+                                        heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
+                                }
+                            }
+                            else{
+                                //do nothing if its already at max speed
+                            }
+                        }
+                        break;
+                    case MOVING_IN_LEFT://it is moving in the left or right part of the screen
+                    case MOVING_IN_RIGHT:
+                        if (heli.getXSpeed() > 0){//it is moving to the left
+                            heli.setXSpeed(heli.getXSpeed() - 1);//reduce its speed by 1
+                            heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
+                        }
+                        else{//the speed is negative or 0
+                            if (0-heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
+                                heli.setXSpeed(heli.getXSpeed() - 1);
+                                if (heli.getXSpeed() == 0){
+                                    heli.setTheta(0);
+                                }
+                                else{
+                                    heli.setTheta(heli.getTheta() - Helicopter.THETA_STEP_SIZE);
+                                }
+                            }
+                            else{
+                                //do nothing if its already at max speed
+                            }
+                        }
+                    break;
+                }
+            }
 	}
 	
 	private void processRightPressed(){
-		if(heli.isLanded()){
-			heli.setLanded(false);
-		}
-		if (heli.getXSpeed() == 0 &&
-				heli.getMovementStatus() == MovementStates.MOVING_LEFT){//need to turn it from left to right
-			heli.setMovementStatus(MovementStates.TURNING_L2R);
-			if (DEBUG){
-				System.out.println("switching directions left to right");
-			}	
-		}
-		else if (heli.getMovementStatus() == MovementStates.TURNING_L2R ||
-				heli.getMovementStatus() == MovementStates.TURNING_R2L){
-			//dont do anything if it is turning
-		}
-		else{
-			switch (heli.getCanvasStatus()){
-				case STATIONARY:
-					if (heli.getXSpeed() < 0){//it is moving to the left
-						heli.setXSpeed(heli.getXSpeed() + 1);//reduce its speed by 1
-						currentLevel.setXSpeed(heli.getXSpeed());//make level have same speed
-						heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
-					}
-					else{//the speed is positive or 0
-						if (heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
-							heli.setXSpeed(heli.getXSpeed() + 1);
-							currentLevel.setXSpeed(heli.getXSpeed());
-							if (heli.getXSpeed() == 0){
-								heli.setTheta(0);
-							}
-							else{
-								heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
-							}
-						}
-						else{
-							//do nothing if its already at max speed
-						}
-					}
-					break;
-				case MOVING_IN_LEFT://it is moving in the left or right part of the screen
-				case MOVING_IN_RIGHT:
-					if (heli.getXSpeed() < 0){//it is moving to the left
-						heli.setXSpeed(heli.getXSpeed() + 1);//reduce its speed by 1
-						heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
-					}
-					else{//the speed is positive  or 0
-						if (heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
-							heli.setXSpeed(heli.getXSpeed() + 1);
-							if (heli.getXSpeed() == 0){
-								heli.setTheta(0);
-							}
-							else{
-								heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
-							}
-						}
-						else{
-							//do nothing if its already at max speed
-						}
-					}
-					break;
-			}
-		}
+            if(heli.isLanded()){
+                    heli.setLanded(false);
+            }
+            if (heli.getXSpeed() == 0 &&
+                heli.getMovementStatus() == MovementStates.MOVING_LEFT){//need to turn it from left to right
+                
+                heli.setMovementStatus(MovementStates.TURNING_L2R);
+                if (DEBUG){
+                    System.out.println("switching directions left to right");
+                }	
+            }
+            else if (heli.getMovementStatus() == MovementStates.TURNING_L2R ||
+                     heli.getMovementStatus() == MovementStates.TURNING_R2L){
+                //dont do anything if it is currently turning
+            }
+            else{
+                switch (heli.getCanvasStatus()){
+                    case STATIONARY:
+                        if (heli.getXSpeed() < 0){//it is moving to the left
+                            heli.setXSpeed(heli.getXSpeed() + 1);//reduce its speed by 1
+                            currentLevel.setXSpeed(heli.getXSpeed());//make level have same speed
+                            heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
+                        }
+                        else{//the speed is positive or 0
+                            if (heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
+                                heli.setXSpeed(heli.getXSpeed() + 1);
+                                currentLevel.setXSpeed(heli.getXSpeed());
+                                if (heli.getXSpeed() == 0){
+                                    heli.setTheta(0);
+                                }
+                                else{
+                                    heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
+                                }
+                            }
+                            else{
+                                //do nothing if its already at max speed
+                            }
+                        }
+                        break;
+                    case MOVING_IN_LEFT://it is moving in the left or right part of the screen
+                    case MOVING_IN_RIGHT:
+                        if (heli.getXSpeed() < 0){//it is moving to the left
+                            heli.setXSpeed(heli.getXSpeed() + 1);//reduce its speed by 1
+                            heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
+                        }
+                        else{//the speed is positive  or 0
+                            if (heli.getXSpeed() < Helicopter.MAX_X_SPEED){//if it is going less than max speed in negative direction
+                                heli.setXSpeed(heli.getXSpeed() + 1);
+                                if (heli.getXSpeed() == 0){
+                                    heli.setTheta(0);
+                                }
+                                else{
+                                    heli.setTheta(heli.getTheta() + Helicopter.THETA_STEP_SIZE);
+                                }
+                            }
+                            else{
+                                //do nothing if its already at max speed
+                            }
+                        }
+                        break;
+                }
+            }
 	}
+        
+        private void processHelpPressed(){
+            switch (gameState){
+                case PLAYING:
+                    gameState = gameStates.PAUSED;
+                    if (helpMenu.isVisible()){
+                        helpMenu.setVisible(false);
+                    }
+                    else{
+                        helpMenu.setVisible(true);
+                    }
+                    break;
+                case PAUSED:
+                case GAMEOVER:
+                    if (helpMenu.isVisible()){
+                        helpMenu.setVisible(false);
+                    }
+                    else{
+                        helpMenu.setVisible(true);
+                    }
+                    break;
+            }
+        }
+        
+        private void processPausePressed(){
+            switch (gameState){
+                case PLAYING:
+                    gameState = gameStates.PAUSED;
+                    break;
+                case PAUSED:
+                    gameState = gameStates.PLAYING;
+                    break;
+                case GAMEOVER:
+                    start();
+                    break;
+            }
+        }
+        
 	/*
 	private static boolean heliWillMoveCanvasX(){
 		if (heli.getX() < MIDDLE_OF_FRAME ){
