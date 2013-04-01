@@ -342,7 +342,7 @@ public class Level {
 		//----------------------draw visible birds--------------
 		for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
 			if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
-					(birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
+			    (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
 				birds[birdIndex].setCanvasX( birds[birdIndex].getX() - this.currentX );//set the x to draw the bird on the canvas
 				birds[birdIndex].drawSprite(g);
 			}

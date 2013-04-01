@@ -10,7 +10,7 @@ public class Tree extends Sprite{
 	private static final String IMAGE_LOCATION = "images/treeSprite.png";
 	private static final int TRUNK_WIDTH = 30;
 	private static final int TRUNK_HEIGHT = 90;
-	private static final int CANOPY_RADIUS = 40;;
+	public static final int CANOPY_RADIUS = 40;;
 	private Rectangle2D trunkCollisionRectangle;
 	
 	public Tree(int xPos, int yPos) {

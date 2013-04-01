@@ -29,8 +29,8 @@ public class HeliGameMain extends JFrame {
 	static final long UPDATE_PERIOD = 1000000000L / UPDATE_RATE;  // time (nanoseconds) that loop thread is paused between game updates
 	static final int NUM_LEVELS = 1;
 	static final int MIDDLE_OF_FRAME = (GAME_WIDTH / 2) - (Helicopter.HELI_WIDTH/2);//the location at which the heli sprite stops moving, and the level starts moving
-		
-	// enumerate states of game to make for more readable code
+
+    	// enumerate states of game to make for more readable code
 	static enum gameStates {
 		INITIALIZED, PLAYING, PAUSED, GAMEOVER, NEXTLEVEL, EXPLODING
 	}
@@ -159,7 +159,6 @@ public class HeliGameMain extends JFrame {
 			}
 			if (gameState == gameStates.NEXTLEVEL){
 				if (currentLevelNumber >= NUM_LEVELS){
-					//TODO: completed all levels
 					win = true;
                                         gameOverMessage = new GameOverMessage("All Levels Completed");
                                         gameState = gameStates.GAMEOVER;
@@ -170,7 +169,7 @@ public class HeliGameMain extends JFrame {
 						currentLevel = new Level(currentLevelNumber);
 					} catch (LevelNotLoadedException e) {
 						e.printStackTrace();
-						shutdown(1);
+						shutdown(1);//exit out of the program 
 					}
 
 					heli = new Helicopter(currentLevel.getStartX(),currentLevel.getStartY());
@@ -212,12 +211,12 @@ public class HeliGameMain extends JFrame {
 		//and the heli starts moving, or vice versa
 	
 		if (heli.willCrossBeginningChange()){
-			if (heli.getXSpeed() > 0){
+			if (heli.getXSpeed() > 0){//it is moving to the right
 				heli.setCanvasX(MIDDLE_OF_FRAME);
 				currentLevel.setXSpeed(heli.getXSpeed());
 				heli.setCanvasStatus(CanvasStates.STATIONARY);
 			}
-			else if (heli.getXSpeed() < 0){
+			else if (heli.getXSpeed() < 0){//it is moving to the left
 				heli.setCanvasX(heli.getX());
 				currentLevel.setXSpeed(0);
 				heli.setCanvasStatus(CanvasStates.MOVING_IN_LEFT);
@@ -238,6 +237,8 @@ public class HeliGameMain extends JFrame {
 		else{//wont cross anywhere
 			switch(heli.getCanvasStatus()){
 				case STATIONARY:
+                                        //don't need to update the heli's canvas x,
+                                        //because the background is moving, not the heli
 					break;
 				case MOVING_IN_RIGHT:
 					heli.setCanvasX(GAME_WIDTH - (currentLevel.getLevelLength() - heli.getX()));
@@ -302,200 +303,10 @@ public class HeliGameMain extends JFrame {
 	}
 	public void collisionDetection() {
 		
-		//------------------------------tree collision--------------------------
-		//check to see if it hits a tree
-		for (int treeNum = 0; treeNum < currentLevel.getTreeList().size(); treeNum++){
-			if(currentLevel.getTreeList().get(treeNum).intersects((Rectangle2D)heli.getCollisionShape())){
-				gameState = gameStates.EXPLODING;
-                                gameOverMessage = new GameOverMessage("Collision With Tree");
-				heliExplosion = new Explosion(heli.getCanvasX(),
-                                                              heli.getY(),
-                                                              Helicopter.HELI_WIDTH + 20,
-                                                              Helicopter.HELI_HEIGHT + 20);
-				currentLevel.setXSpeed(0);
-				if (DEBUG){
-					System.out.println("Collision with tree");
-				}
-			}
-		}
-		
-		//---------------------------bird Collision------------------
-		//check to see if it hits a bird
-		for (int birdNum = 0; birdNum < Bird.MAX_BIRDS; birdNum++){
-			if (currentLevel.getBirds()[birdNum].intersects((Rectangle2D)heli.getCollisionShape())){
-				switch(heli.getThrottleStatus()){
-                                    case IDLE:
-                                        //make bird go over the heli if it is idle
-                                        currentLevel.getBirds()[birdNum].setY(currentLevel.getBirds()[birdNum].getY() - 1);
-                                        if (DEBUG){
-                                                System.out.println("collision with bird");	
-                                        }
-                                        break;
-                                    case NO_LIFT://if the rotor is spinning and
-                                    case HOVER:  //a bird collides with it, 
-                                    case LIFT:   //you're gonna have a bad time
-                                        gameState = gameStates.EXPLODING;
-                                        gameOverMessage = new GameOverMessage("Fatal Collision With Bird");
-                                        currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
-                                        birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getCanvasX()
-                                                              ,currentLevel.getBirds()[birdNum].getY()
-                                                              ,Bird.BIRD_WIDTH
-                                                              ,Bird.BIRD_HEIGHT);
-                                        currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
-                                   
-                                        heliExplosion = new Explosion(heli.getCanvasX(),
-                                                                      heli.getY(),
-                                                                      Helicopter.HELI_WIDTH + 20,
-                                                                      Helicopter.HELI_HEIGHT + 20);
-                                        currentLevel.setXSpeed(0);
-                                        if (DEBUG){
-                                                System.out.println("fatal collision with bird");	
-                                        }
-                                        break;
-                                }
-                        
-			}
-		}
-		
-		//--------------------------ring Collision----------------------
-		//check to see if it hits a ring
-		for (int ringNum = 0; ringNum < currentLevel.getRingList().size(); ringNum++){
-			if (currentLevel.getRingList().get(ringNum).intersects((Rectangle2D)heli.getCollisionShape())){
-				score += Ring.RING_VALUE;
-				currentLevel.getRingList().get(ringNum).setX(0-Ring.RING_WIDTH - 20);//move the ring outside of the play area
-				currentLevel.getRingList().get(ringNum).generateCollisionShape();//make sure its collision shape moves with it
-				if (DEBUG){
-					System.out.println("collision with ring");	
-				}
-			}
-		}
-		
-		//------------------------ground collision-----------------------------
-		//check to see if it hits the ground too fast
-		if (currentLevel.getGround().intersects((Rectangle2D) heli.getCollisionShape())
-			&& heli.getYSpeed() != 0){//don't need to do stuff for collision if y speed is 0,
-									  //so no need to go into this loop if the heli isnt moving
-			
-			if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED || //going to fast horizontally to safely land traveling to the right
-				heli.getXSpeed() < (0-Helicopter.MAX_X_LANDING_SPEED)){//going to fast to safely land in - x direction (to the left)
-				//gameState = gameStates.GAMEOVER;
-                                gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-				gameState = gameStates.EXPLODING;
-				heliExplosion = new Explosion(heli.getCanvasX(),
-                                                              heli.getY(),
-                                                              Helicopter.HELI_WIDTH + 20,
-                                                              Helicopter.HELI_HEIGHT + 20);
-				currentLevel.setXSpeed(0);
-				if (DEBUG){
-					System.out.println("intersected ground too fast");
-				}
-				
-			}
-			else{
-				if (heli.getYSpeed() < (Helicopter.MAX_Y_LANDING_SPEED)){
-					//TODO: process heli blowing up
-					//gameState = gameStates.GAMEOVER;
-                                        gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-					gameState = gameStates.EXPLODING;
-					heliExplosion = new Explosion(heli.getCanvasX(),
-                                                                      heli.getY(),
-                                                                      Helicopter.HELI_WIDTH + 20,
-                                                                      Helicopter.HELI_HEIGHT + 20);
-					currentLevel.setXSpeed(0);
-					if (DEBUG){
-						System.out.println("intersected ground too fast");
-					}
-				}
-				else{
-					//TODO: process normal landing
-					heli.setYSpeed(0);
-					heli.setXSpeed(0);
-					heli.setTheta(0);
-					heli.setY(heli.getY() - 1);
-					currentLevel.setXSpeed(0);
-					heli.setLanded(true);
-					if (DEBUG){
-						System.out.println("normal landing");
-					}
-				}
-			}
-		}
-		
-		//check to see if the heli is starting to move into the ground and correct that
-		if (currentLevel.getGround().containsPoint(heli.getX(),
-                                                           heli.getY() + (Helicopter.HELI_HEIGHT - 1))){//heli is moving into ground in -x direction
-			if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
-				heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
-				gameState = gameStates.EXPLODING;
-                                gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-				heliExplosion = new Explosion(heli.getCanvasX(),
-                                                              heli.getY(),
-                                                              Helicopter.HELI_WIDTH + 20,
-                                                              Helicopter.HELI_HEIGHT + 20);
-				currentLevel.setXSpeed(0);
-			}
-			else{
-				//stop it moving
-				heli.setYSpeed(0);
-				heli.setXSpeed(0);
-				heli.setTheta(0);//reset the angle it is at
-				heli.setLanded(true);
-				heli.setY(heli.getY() - 1);
-				
-				currentLevel.setXSpeed(0);
-				if (DEBUG){
-					System.out.println("Correction applied");
-				}
-				
-				//heli.setX(heli.getX() + 3);
-				//switch (heli.getCanvasStatus()){
-				//	case STATIONARY:
-				//		//move currectX in level to sync the part of the level which is drawm
-				//		currentLevel.setCurrentX(currentLevel.getCurrentX() + 3);
-				//		break;
-				//	case MOVING_IN_LEFT:
-				//	case MOVING_IN_RIGHT:
-				//		//dont need to apply this correction if the heli's x is actually changing
-				//		break;
-				//}
-			}
-		}
-		else if (currentLevel.getGround().containsPoint(heli.getX() + Helicopter.HELI_WIDTH,
-                                                                heli.getY() + (Helicopter.HELI_HEIGHT - 1))){//heli is moving into ground in +x direction
-			if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
-					heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
-					gameState = gameStates.EXPLODING;
-                                        gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
-					heliExplosion = new Explosion(heli.getCanvasX(),
-                                                                      heli.getY(),
-                                                                      Helicopter.HELI_WIDTH,
-                                                                      Helicopter.HELI_HEIGHT);
-					currentLevel.setXSpeed(0);
-				}
-			else{
-				heli.setYSpeed(0);
-				heli.setXSpeed(0);
-				heli.setY(heli.getY() - 1);
-				heli.setLanded(true);
-				heli.setTheta(0);
-	
-				currentLevel.setXSpeed(0);
-				
-				if (DEBUG){
-					System.out.println("Correction applied");
-				}
-				
-				//heli.setX(heli.getX() - 3);
-				//switch (heli.getCanvasStatus()){
-				//case STATIONARY:
-				//	currentLevel.setCurrentX(currentLevel.getCurrentX() - 3);
-				//	break;
-				//case MOVING_IN_LEFT:
-				//case MOVING_IN_RIGHT:
-				//	break;
-				//}
-			}
-		}
+		checkTreeCollision();
+		checkBirdCollision();
+		checkRingCollision();
+		checkGroundCollision();
                 
                 //---------------------------check to see if within finish line------------------
                 if (heli.isLanded() && currentLevel.getFinishLine().contains((Rectangle2D)heli.getCollisionShape())){
@@ -503,36 +314,246 @@ public class HeliGameMain extends JFrame {
                 }
 	}
 
+        private void checkTreeCollision() {
+            //------------------------------tree collision--------------------------
+            //check to see if it hits a tree
+            for (int treeNum = 0; treeNum < currentLevel.getTreeList().size(); treeNum++){
+                if (currentLevel.getTreeList().get(treeNum).getX() >= (currentLevel.getCurrentX() - Tree.CANOPY_RADIUS * 2) &&
+                    currentLevel.getTreeList().get(treeNum).getX() <= (currentLevel.getCurrentX() + GAME_WIDTH)){//only need to check visible trees
+                    if (currentLevel.getTreeList().get(treeNum).intersects((Rectangle2D)heli.getCollisionShape())){
+                        gameState = gameStates.EXPLODING;
+                        gameOverMessage = new GameOverMessage("Collision With Tree");
+                        heliExplosion = new Explosion(heli.getCanvasX(),
+                                                      heli.getY(),
+                                                      Helicopter.HELI_WIDTH + 20,
+                                                      Helicopter.HELI_HEIGHT + 20);
+                        currentLevel.setXSpeed(0);
+                        if (DEBUG){
+                                System.out.println("Collision with tree");
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void checkBirdCollision(){
+            //---------------------------bird Collision------------------
+            //check to see if it hits a bird
+            for (int birdNum = 0; birdNum < Bird.MAX_BIRDS; birdNum++){
+                if (currentLevel.getBirds()[birdNum].getX() >= (currentLevel.getCurrentX() - Bird.BIRD_WIDTH) &&
+                    currentLevel.getBirds()[birdNum].getX() <= (currentLevel.getCurrentX() + GAME_WIDTH)){//only need to check visible birds
+                    if (currentLevel.getBirds()[birdNum].intersects((Rectangle2D)heli.getCollisionShape())){
+                        switch(heli.getThrottleStatus()){
+                            case IDLE:
+                                //make bird go over the heli if it is idle
+                                currentLevel.getBirds()[birdNum].setY(currentLevel.getBirds()[birdNum].getY() - 1);
+                                if (DEBUG){
+                                        System.out.println("collision with bird");	
+                                }
+                                break;
+                            case NO_LIFT://if the rotor is spinning and
+                            case HOVER:  //a bird collides with it, 
+                            case LIFT:   //you're gonna have a bad time
+                                gameState = gameStates.EXPLODING;
+                                gameOverMessage = new GameOverMessage("Fatal Collision With Bird");
+                                currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
+                                birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getCanvasX()
+                                                      ,currentLevel.getBirds()[birdNum].getY()
+                                                      ,Bird.BIRD_WIDTH
+                                                      ,Bird.BIRD_HEIGHT);
+                                currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
+
+                                heliExplosion = new Explosion(heli.getCanvasX(),
+                                                              heli.getY(),
+                                                              Helicopter.HELI_WIDTH + 20,
+                                                              Helicopter.HELI_HEIGHT + 20);
+                                currentLevel.setXSpeed(0);
+                                if (DEBUG){
+                                    System.out.println("fatal collision with bird");	
+                                }
+                                break;
+                        }
+
+                    }
+                }
+            }
+        }
+        
+        private void checkRingCollision(){
+            //--------------------------ring Collision----------------------
+            //check to see if it hits a ring
+            for (int ringNum = 0; ringNum < currentLevel.getRingList().size(); ringNum++){
+                if (currentLevel.getRingList().get(ringNum).getX() >= (currentLevel.getCurrentX() - Ring.RING_WIDTH) &&
+                    currentLevel.getRingList().get(ringNum).getX() <= (currentLevel.getCurrentX() + GAME_WIDTH)){//only need to check visible rings
+                    if (currentLevel.getRingList().get(ringNum).intersects((Rectangle2D)heli.getCollisionShape())){
+                        score += Ring.RING_VALUE;
+                        currentLevel.getRingList().get(ringNum).setX(0-Ring.RING_WIDTH - 20);//move the ring outside of the play area
+                        currentLevel.getRingList().get(ringNum).generateCollisionShape();//make sure its collision shape moves with it
+                        if (DEBUG){
+                            System.out.println("collision with ring");	
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void checkGroundCollision(){
+            //------------------------ground collision-----------------------------
+            //check to see if it hits the ground too fast
+            if (currentLevel.getGround().intersects((Rectangle2D) heli.getCollisionShape())
+                    && heli.getYSpeed() != 0){//don't need to do stuff for collision if y speed is 0,
+                                              //so no need to go into this stuff if the heli isnt moving
+
+                if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED || //going to fast horizontally to safely land traveling to the right
+                    heli.getXSpeed() < (0-Helicopter.MAX_X_LANDING_SPEED)){//going to fast to safely land in - x direction (to the left)
+                        
+                    //gameState = gameStates.GAMEOVER;
+                    gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
+                    gameState = gameStates.EXPLODING;
+                    heliExplosion = new Explosion(heli.getCanvasX(),
+                                                  heli.getY(),
+                                                  Helicopter.HELI_WIDTH + 20,
+                                                  Helicopter.HELI_HEIGHT + 20);
+                    currentLevel.setXSpeed(0);
+                    if (DEBUG){
+                            System.out.println("intersected ground too fast");
+                    }
+                }
+                else{
+                    if (heli.getYSpeed() < (Helicopter.MAX_Y_LANDING_SPEED)){
+                        //gameState = gameStates.GAMEOVER;
+                        gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
+                        gameState = gameStates.EXPLODING;
+                        heliExplosion = new Explosion(heli.getCanvasX(),
+                                                      heli.getY(),
+                                                      Helicopter.HELI_WIDTH + 20,
+                                                      Helicopter.HELI_HEIGHT + 20);
+                        currentLevel.setXSpeed(0);
+                        if (DEBUG){
+                                System.out.println("intersected ground too fast");
+                        }
+                    }
+                    else{
+                        heli.setYSpeed(0);
+                        heli.setXSpeed(0);
+                        heli.setTheta(0);
+                        heli.setY(heli.getY() - 1);
+                        currentLevel.setXSpeed(0);
+                        heli.setLanded(true);
+                        if (DEBUG){
+                                System.out.println("normal landing");
+                        }
+                    }
+                }
+            }
+
+            //check to see if the heli is starting to move into the ground and correct that
+            if (currentLevel.getGround().containsPoint(heli.getX(),
+                                                       heli.getY() + (Helicopter.HELI_HEIGHT - 1))){//heli is moving into ground in -x direction
+                    if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
+                            heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
+                            gameState = gameStates.EXPLODING;
+                            gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
+                            heliExplosion = new Explosion(heli.getCanvasX(),
+                                                          heli.getY(),
+                                                          Helicopter.HELI_WIDTH + 20,
+                                                          Helicopter.HELI_HEIGHT + 20);
+                            currentLevel.setXSpeed(0);
+                    }
+                    else{
+                            //stop it moving
+                            heli.setYSpeed(0);
+                            heli.setXSpeed(0);
+                            heli.setTheta(0);//reset the angle it is at
+                            heli.setLanded(true);
+                            heli.setY(heli.getY() - 1);
+
+                            currentLevel.setXSpeed(0);
+                            if (DEBUG){
+                                    System.out.println("Correction applied");
+                            }
+
+                            //heli.setX(heli.getX() + 3);
+                            //switch (heli.getCanvasStatus()){
+                            //	case STATIONARY:
+                            //		//move currectX in level to sync the part of the level which is drawm
+                            //		currentLevel.setCurrentX(currentLevel.getCurrentX() + 3);
+                            //		break;
+                            //	case MOVING_IN_LEFT:
+                            //	case MOVING_IN_RIGHT:
+                            //		//dont need to apply this correction if the heli's x is actually changing
+                            //		break;
+                            //}
+                    }
+            }
+            else if (currentLevel.getGround().containsPoint(heli.getX() + Helicopter.HELI_WIDTH,
+                                                            heli.getY() + (Helicopter.HELI_HEIGHT - 1))){//heli is moving into ground in +x direction
+                    if (heli.getXSpeed() > Helicopter.MAX_X_LANDING_SPEED ||
+                                    heli.getYSpeed() < Helicopter.MAX_Y_LANDING_SPEED){
+                                    gameState = gameStates.EXPLODING;
+                                    gameOverMessage = new GameOverMessage("Hit Ground Too Fast");
+                                    heliExplosion = new Explosion(heli.getCanvasX(),
+                                                                  heli.getY(),
+                                                                  Helicopter.HELI_WIDTH,
+                                                                  Helicopter.HELI_HEIGHT);
+                                    currentLevel.setXSpeed(0);
+                            }
+                    else{
+                            heli.setYSpeed(0);
+                            heli.setXSpeed(0);
+                            heli.setY(heli.getY() - 1);
+                            heli.setLanded(true);
+                            heli.setTheta(0);
+
+                            currentLevel.setXSpeed(0);
+
+                            if (DEBUG){
+                                    System.out.println("Correction applied");
+                            }
+
+                            //heli.setX(heli.getX() - 3);
+                            //switch (heli.getCanvasStatus()){
+                            //case STATIONARY:
+                            //	currentLevel.setCurrentX(currentLevel.getCurrentX() - 3);
+                            //	break;
+                            //case MOVING_IN_LEFT:
+                            //case MOVING_IN_RIGHT:
+                            //	break;
+                            //}
+                    }
+            }
+        }
+        
 	//refresh the game. called in the repaint method of gamepanel
 	public void drawGame(Graphics g){
-		switch (gameState){
-			case PLAYING:
-			case PAUSED:
-				currentLevel.drawVisibleLevel(g);
-                                heli.drawSprite(g);
-				break;
-			case EXPLODING:
-				currentLevel.drawVisibleLevel(g);
-                                heli.drawSprite(g);
-                                if (birdExplosion != null){
-                                    birdExplosion.drawSprite(g);
-                                }
-                                heliExplosion.drawSprite(g);
-				break;
-			case GAMEOVER:
-				//TODO: Draw stuff for gameover
-				//heli.drawSprite(g);
-				currentLevel.drawVisibleLevel(g);
-                                if (win){
-                                    heli.drawSprite(g);
-                                    //TODO: draw something for win
-                                    gameOverMessage.draw(g);
-                                }
-                                else{
-                                    gameOverMessage.draw(g);
-                                }
-				break;
-		}
+            switch (gameState){
+                case PLAYING:
+                case PAUSED:
+                    currentLevel.drawVisibleLevel(g);
+                    heli.drawSprite(g);
+                    break;
+                case EXPLODING:
+                    currentLevel.drawVisibleLevel(g);
+                    heli.drawSprite(g);
+                    if (birdExplosion != null){
+                        birdExplosion.drawSprite(g);
+                    }
+                    heliExplosion.drawSprite(g);
+                    break;
+                case GAMEOVER:
+                    //TODO: Draw stuff for gameover
+                    //heli.drawSprite(g);
+                    currentLevel.drawVisibleLevel(g);
+                    if (win){
+                        heli.drawSprite(g);
+                        //TODO: draw something for win
+                        gameOverMessage.draw(g);
+                    }
+                    else{
+                        gameOverMessage.draw(g);
+                    }
+                    break;
+            }
 	}
 	
 	//update state of game objects on key press
