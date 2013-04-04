@@ -69,9 +69,9 @@ public class Helicopter extends Sprite{
 	private static final String leftLocation = "images/heli/facingLeft/leftFrame";
 	private static final String turningLocation = "images/heli/turning/turningFrame";
 	//private static final int hoverAnimDelay = 20;
-	private static final int rightAnimDelay = 10;
-	private static final int leftAnimDelay = 10;
-	private static final int turningAnimDelay = 12;
+	private static final int rightAnimDelay = 5;
+	private static final int leftAnimDelay = 5;
+	private static final int turningAnimDelay = 7;
 	
 	//---------------------------------constructor------------------------
 	Helicopter(int xIn, int yIn){

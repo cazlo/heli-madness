@@ -15,19 +15,19 @@ public class Bird extends Sprite {
 	static final int MIN_ALTITUDE = 450;//the lowest they will go
 	static final int BIRD_WIDTH = 20;
 	static final int BIRD_HEIGHT = 20;
-	static final int MAX_SPEED = 3;
+	static final int MAX_SPEED = 4;
         static final int MAX_BIRDS_NORMAL = 35;
         static final int MAX_BIRDS_DEBUG = 15;
 	
 	static int MAX_BIRDS = MAX_BIRDS_NORMAL;
 	//---------variables------------
 	private int canvasX;
-	private int initialY;
+	private int initialY, initialX;
 	
 	//----------------------------stuff for animation-------------------------------
 	private static final int [] birdAnimImageNumbers = {1,2,3};
 	private static final String birdAnimLocation = "images/bird/birdFrame";
-	private static int birdAnimDelay = 10;//MAX_BIRDS * 10;
+	private static int birdAnimDelay = 5;//MAX_BIRDS * 10;
 	//private static AnimationUtils birdAnim;
         private AnimationUtils birdAnim;
 	
@@ -58,6 +58,7 @@ public class Bird extends Sprite {
 		//this.setXSpeed(-1);
 		this.setXSpeed(0-(rng.nextInt(MAX_SPEED) + 1));//random speed birds in 1 direction
 		this.setInitialY(yIn);
+                this.setInitialX(xIn);
 		this.generateCollisionShape();
 	}
 	
@@ -75,6 +76,13 @@ public class Bird extends Sprite {
 
 	public void setInitialY(int initialYIn) {
 		this.initialY = initialYIn;
+	}
+        public int getInitialX() {
+		return initialX;
+	}
+
+	public void setInitialX(int initialXIn) {
+		this.initialX = initialXIn;
 	}
 
 	//-------------------------collision detection stuff----------------
