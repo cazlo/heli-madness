@@ -29,7 +29,15 @@ public class HeliGameMain extends JFrame {
 	static final long UPDATE_PERIOD = 1000000000L / UPDATE_RATE;  // time (nanoseconds) that loop thread is paused between game updates
 	static final int NUM_LEVELS = 1;
 	static final int MIDDLE_OF_FRAME = (GAME_WIDTH / 2) - (Helicopter.HELI_WIDTH/2);//the location at which the heli sprite stops moving, and the level starts moving
-
+        
+        //booleans for keypress handling
+        volatile boolean bUpPressed = false;
+        volatile boolean bDownPressed = false;
+        volatile boolean bLeftPressed = false;
+        volatile boolean bRightPressed = false;
+        volatile boolean bHelpPressed = false;
+        volatile boolean bPausePressed = false;
+        
     	// enumerate states of game to make for more readable code
 	static enum GameStates {
             INITIALIZED, PLAYING, PAUSED, GAMEOVER, NEXTLEVEL, EXPLODING, WIN
@@ -323,10 +331,10 @@ public class HeliGameMain extends JFrame {
 	}
 	public void collisionDetection() {
 		
-            checkTreeCollision();
-            checkBirdCollision();
-            checkRingCollision();
-            checkGroundCollision();
+            //checkTreeCollision();
+            //checkBirdCollision();
+            //checkRingCollision();
+            //checkGroundCollision();
 
             //---------------------------check to see if within finish line------------------
             if (heli.isLanded() && currentLevel.getFinishLine().contains((Rectangle2D)heli.getCollisionShape())){
@@ -581,7 +589,62 @@ public class HeliGameMain extends JFrame {
 	}
 	
 	//update state of game objects on key press
-	public void processKeyPress(int keyCode){
+	public void processKeyPress(){
+            
+            //Process if up was pressed.
+            if(bUpPressed == true){
+                processThrottleUp();
+            }
+            
+            //Process if down was pressed.
+            if(bDownPressed == true){
+                processThrottleDown();
+            }
+            
+            //Proccess if left was pressed.
+            if(bLeftPressed == true && gameState ==GameStates.PLAYING){
+                switch (heli.getThrottleStatus()){
+                    case IDLE://do nothing
+                        break;
+                    case NO_LIFT:
+                        if (!heli.isLanded()){
+                            processLeftPressed();
+                        }
+                        break;
+                    case HOVER:
+                    case LIFT:
+                        processLeftPressed();
+                        break;
+                }
+            }
+            
+            //Process if right was pressed.
+            if(bRightPressed == true && gameState == GameStates.PLAYING){
+                switch (heli.getThrottleStatus()){
+                    case IDLE://do nothing
+                        break;
+                    case NO_LIFT:
+                        if (!heli.isLanded()){
+                            processRightPressed();
+                        }
+                        break;
+                    case HOVER:
+                    case LIFT:
+                        processRightPressed();
+                        break;
+                }
+            }
+            
+            //Process if help was pressed.
+            if(bHelpPressed == true){
+                processHelpPressed();
+            }
+            
+            //Process if pause was pressed.
+            if(bPausePressed == true){
+                processPausePressed();
+            }
+            /*
             switch(keyCode){
                 //----------------process throttle up button pressed-------------------
                 case KeyEvent.VK_UP: 
@@ -641,6 +704,7 @@ public class HeliGameMain extends JFrame {
                     processPausePressed();
                     break;
             }
+            */
 	}
 	
         private void processThrottleUp(){
@@ -917,20 +981,82 @@ public class HeliGameMain extends JFrame {
 		
 		@Override
 		public void keyPressed(KeyEvent e) {//process key press
-			processKeyPress(e.getKeyCode());
+                    
+                    switch(e.getKeyCode()){//set keypress booleans
+                            case KeyEvent.VK_UP:
+                            case KeyEvent.VK_W:
+                                bUpPressed = true;
+                                break;
+
+                            case KeyEvent.VK_DOWN:
+                            case KeyEvent.VK_S:
+                                bDownPressed = true;
+                                break;
+
+                            case KeyEvent.VK_LEFT:
+                            case KeyEvent.VK_A:
+                                bLeftPressed = true;
+                                break;
+
+                            case KeyEvent.VK_RIGHT:
+                            case KeyEvent.VK_D:
+                                bRightPressed = true;
+                                break;
+
+                            case KeyEvent.VK_H:
+                                bHelpPressed = true;
+                                break;
+
+                            case KeyEvent.VK_P:
+                                bPausePressed = true;
+                                break;
+                        }
+			processKeyPress();//process the keypress booleans
 
 		}
 
 		@Override
-		public void keyReleased(KeyEvent arg0) {
-			// TODO Auto-generated method stub
+		public void keyReleased(KeyEvent e) {//set released keypress booleans
+                        switch(e.getKeyCode()){
+                            case KeyEvent.VK_UP:
+                            case KeyEvent.VK_W:
+                                bUpPressed = false;
+                                break;
+
+                            case KeyEvent.VK_DOWN:
+                            case KeyEvent.VK_S:
+                                bDownPressed = false;
+                                break;
+
+                            case KeyEvent.VK_LEFT:
+                            case KeyEvent.VK_A:
+                                bLeftPressed = false;
+                                break;
+
+                            case KeyEvent.VK_RIGHT:
+                            case KeyEvent.VK_D:
+                                bRightPressed = false;
+                                break;
+
+                            case KeyEvent.VK_H:
+                                bHelpPressed = false;
+                                break;
+
+                            case KeyEvent.VK_P:
+                                bPausePressed = false;
+                                break;
+                        }
+                        //processKeyRelease();
+                    
 
 		}
+                
+                
 
 		@Override
 		public void keyTyped(KeyEvent arg0) {
 			// TODO Auto-generated method stub
-
+                
 		}
 
 	}
@@ -1058,6 +1184,7 @@ public class HeliGameMain extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         HeliGameMain.HelpMenu.this.setVisible(false);
+                        bHelpPressed = false;//Sets the help boolean to false to stop interference with the rest of the keypresses.
                         if (gameState == GameStates.GAMEOVER || 
                             gameState == GameStates.WIN){
                             start();
