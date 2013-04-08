@@ -48,8 +48,6 @@ public class Ground extends Sprite{
 	}
 	
 	public void drawGround(Graphics2D g2){
-			
-		
 		try {
 			//BufferedImage imageIn = new BufferedImage()
 			g2.setColor(Color.GRAY);

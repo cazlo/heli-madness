@@ -16,7 +16,7 @@ public class Explosion extends Sprite {
 	//----------------------------stuff for animation-------------------------------
 	private static final int [] explosionAnimImageNumbers = {1,2,3};
 	private static final String explosionAnimLocation = "images/explosion/explosionFrame";
-	private static final int explosionAnimDelay = 20;
+	private static final int explosionAnimDelay = 15;
 	private AnimationUtils explosionAnim;
 	
 	
