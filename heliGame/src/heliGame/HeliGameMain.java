@@ -331,10 +331,10 @@ public class HeliGameMain extends JFrame {
 	}
 	public void collisionDetection() {
 		
-            //checkTreeCollision();
-            //checkBirdCollision();
-            //checkRingCollision();
-            //checkGroundCollision();
+            checkTreeCollision();
+            checkBirdCollision();
+            checkRingCollision();
+            checkGroundCollision();
 
             //---------------------------check to see if within finish line------------------
             if (heli.isLanded() && currentLevel.getFinishLine().contains((Rectangle2D)heli.getCollisionShape())){
