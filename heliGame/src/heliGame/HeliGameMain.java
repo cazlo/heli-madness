@@ -695,67 +695,6 @@ public final class HeliGameMain extends JFrame {
             if(bPausePressed == true){
                 processPausePressed();
             }
-            /*
-            switch(keyCode){
-                //----------------process throttle up button pressed-------------------
-                case KeyEvent.VK_UP: 
-                case KeyEvent.VK_W:	
-                    //w and up key are equivalent to throttle up
-                    processThrottleUp();
-                    break;
-                //----------------process throttle down button pressed-------------------
-                case KeyEvent.VK_DOWN:
-                case KeyEvent.VK_S://process s pressed; throttle down
-                    processThrottleDown();    
-                    break;
-                //----------------process left button pressed-------------------
-                case KeyEvent.VK_LEFT:
-                case KeyEvent.VK_A://process 'a' pressed
-                    if (gameState == GameStates.PLAYING){
-                        switch (heli.getThrottleStatus()){
-                            case IDLE://do nothing
-                                break;
-                            case NO_LIFT:
-                                if (!heli.isLanded()){
-                                    processLeftPressed();
-                                }
-                                break;
-                            case HOVER:
-                            case LIFT:
-                                processLeftPressed();
-                                break;
-                        }
-                    }
-                    break;
-                    //----------------process right button pressed-------------------
-                case KeyEvent.VK_RIGHT:
-                case KeyEvent.VK_D://process 'd' pressed
-                    if (gameState == GameStates.PLAYING){
-                        switch (heli.getThrottleStatus()){
-                            case IDLE://do nothing
-                                break;
-                            case NO_LIFT:
-                                if (!heli.isLanded()){
-                                    processRightPressed();
-                                }
-                                break;
-                            case HOVER:
-                            case LIFT:
-                                processRightPressed();
-                                break;
-                        }
-                    }
-                    break;
-                //----------------process help button pressed-------------------
-                case KeyEvent.VK_H:
-                    processHelpPressed();
-                    break;
-                //----------------process pause button pressed-------------------    
-                case KeyEvent.VK_P:
-                    processPausePressed();
-                    break;
-            }
-            */
 	}
 	
         private void processThrottleUp(){
