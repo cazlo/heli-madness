@@ -381,6 +381,16 @@ public class Level {
 	public void updateLevel(){
             this.currentX += xSpeed;
             //update position of level's objects
+            
+            //-----update animation of visible rings---------------
+            for (int ringNum = 0; ringNum < ringList.size(); ringNum++){
+                if ((ringList.get(ringNum).getX()>= (this.currentX - Ring.RING_WIDTH)) &&
+                    (ringList.get(ringNum).getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
+                    ringList.get(ringNum).updateAnimation();
+                }
+            }
+            
+            
             //-----------process each bird 1 at a time--------------------
             for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
                 //-----------------check to see if bird is going into ground-----------------
@@ -403,6 +413,9 @@ public class Level {
                     else{
                         //put it back at the end of the level
                         birds[birdIndex].setX(this.levelLength);
+                        //also set its inital x as this so that the end is more
+                        //populated with birds
+                        birds[birdIndex].setInitialX(this.levelLength);
                     }
                     
                     birds[birdIndex].setY(birds[birdIndex].getInitialY());
