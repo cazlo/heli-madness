@@ -29,7 +29,7 @@ public class GameOverMessage {
         Graphics g2 = (Graphics2D)g;
         
         g2.setFont(new Font("Lucidia", Font.BOLD, 96));
-        g2.setColor(Color.BLACK);
+        g2.setColor(Color.WHITE);
         g2.drawString("Game Over",
                      x - (g2.getFontMetrics().stringWidth("Game Over")/2),
                      y);

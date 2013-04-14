@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class Bird extends Sprite {
 	//---------constants-----------
-	private static final String IMAGE_NAME = "birdSprite.gif";
+	//private static final String IMAGE_NAME = "birdSprite.gif";
 	
 	static final int MIN_ALTITUDE = 450;//the lowest they will go
 	static final int BIRD_WIDTH = 20;
