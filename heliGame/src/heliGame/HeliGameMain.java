@@ -342,7 +342,9 @@ public final class HeliGameMain extends JFrame {
     public void collisionDetection() {
 
         checkTreeCollision();
-        checkBirdCollision();
+        if(!DEBUG){//only check for bird collision if it is not in debug mode
+            checkBirdCollision();
+        }
         checkRingCollision();
         checkGroundCollision();
 
@@ -377,65 +379,67 @@ public final class HeliGameMain extends JFrame {
     private void checkBirdCollision(){
         //---------------------------bird Collision------------------
         //check to see if it hits a bird
+        
+        
         for (int birdNum = 0; birdNum < Bird.MAX_BIRDS; birdNum++){
-            if (currentLevel.getBirds()[birdNum].getX() >= (currentLevel.getCurrentX() - Bird.BIRD_WIDTH) &&
-                currentLevel.getBirds()[birdNum].getX() <= (currentLevel.getCurrentX() + GAME_WIDTH)){//only need to check visible birds
-                if (currentLevel.getBirds()[birdNum].intersects((Rectangle2D)heli.getCollisionShape())){
-                    switch(heli.getThrottleStatus()){
-                        case IDLE:
-                            //make bird go over the heli if it is idle and landed
-                            if (heli.isLanded()){
-                                currentLevel.getBirds()[birdNum].setY(currentLevel.getBirds()[birdNum].getY() - 1);
-                                if (DEBUG){
-                                        System.out.println("collision with bird");	
-                                }
+            //if (currentLevel.getBirds()[birdNum].getX() >= (currentLevel.getCurrentX() - Bird.BIRD_WIDTH) &&
+              //  currentLevel.getBirds()[birdNum].getX() <= (currentLevel.getCurrentX() + GAME_WIDTH)){//only need to check visible birds
+            if (currentLevel.getBirds()[birdNum].intersects((Rectangle2D)heli.getCanvasCollisionBox())){
+                switch(heli.getThrottleStatus()){
+                    case IDLE:
+                        //make bird go over the heli if it is idle and landed
+                        if (heli.isLanded()){
+                            currentLevel.getBirds()[birdNum].setY(currentLevel.getBirds()[birdNum].getY() - 1);
+                            if (DEBUG){
+                                    System.out.println("collision with bird");	
                             }
-                            else{
-                                gameState = GameStates.EXPLODING;
-                                gameOverMessage = new GameOverMessage("Fatal Collision With Bird", score, currentLevel.getMaxScore());
-                                currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
-                                birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getCanvasX()
-                                                             ,currentLevel.getBirds()[birdNum].getY()
-                                                             ,Bird.BIRD_WIDTH
-                                                             ,Bird.BIRD_HEIGHT);
-                                                             currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
-
-                                heliExplosion = new Explosion(heli.getCanvasX(),
-                                heli.getY(),
-                                Helicopter.HELI_WIDTH + 20,
-                                Helicopter.HELI_HEIGHT + 20);
-                                currentLevel.setXSpeed(0);
-                                if (DEBUG){
-                                System.out.println("fatal collision with bird");	
-                                }
-
-                            }
-                            break;
-                        case NO_LIFT://if the rotor is spinning and
-                        case HOVER:  //a bird collides with it, 
-                        case LIFT:   //you're gonna have a bad time
+                        }
+                        else{
                             gameState = GameStates.EXPLODING;
                             gameOverMessage = new GameOverMessage("Fatal Collision With Bird", score, currentLevel.getMaxScore());
                             currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
-                            birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getCanvasX()
-                                                  ,currentLevel.getBirds()[birdNum].getY()
-                                                  ,Bird.BIRD_WIDTH
-                                                  ,Bird.BIRD_HEIGHT);
-                            currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
+                            birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getX()
+                                                         ,currentLevel.getBirds()[birdNum].getY()
+                                                         ,Bird.BIRD_WIDTH
+                                                         ,Bird.BIRD_HEIGHT);
+                                                         currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
 
                             heliExplosion = new Explosion(heli.getCanvasX(),
-                                                          heli.getY(),
-                                                          Helicopter.HELI_WIDTH + 20,
-                                                          Helicopter.HELI_HEIGHT + 20);
+                            heli.getY(),
+                            Helicopter.HELI_WIDTH + 20,
+                            Helicopter.HELI_HEIGHT + 20);
                             currentLevel.setXSpeed(0);
                             if (DEBUG){
-                                System.out.println("fatal collision with bird");	
+                            System.out.println("fatal collision with bird");	
                             }
-                            break;
-                    }
 
+                        }
+                        break;
+                    case NO_LIFT://if the rotor is spinning and
+                    case HOVER:  //a bird collides with it, 
+                    case LIFT:   //you're gonna have a bad time
+                        gameState = GameStates.EXPLODING;
+                        gameOverMessage = new GameOverMessage("Fatal Collision With Bird", score, currentLevel.getMaxScore());
+                        currentLevel.getBirds()[birdNum].setXSpeed(0);//slow the bird so it will remain within the explosion
+                        birdExplosion = new Explosion(currentLevel.getBirds()[birdNum].getX()
+                                              ,currentLevel.getBirds()[birdNum].getY()
+                                              ,Bird.BIRD_WIDTH
+                                              ,Bird.BIRD_HEIGHT);
+                        currentLevel.getBirds()[birdNum].setY(0-Bird.BIRD_HEIGHT);//move the bird off screen
+
+                        heliExplosion = new Explosion(heli.getCanvasX(),
+                                                      heli.getY(),
+                                                      Helicopter.HELI_WIDTH + 20,
+                                                      Helicopter.HELI_HEIGHT + 20);
+                        currentLevel.setXSpeed(0);
+                        if (DEBUG){
+                            System.out.println("fatal collision with bird");	
+                        }
+                        break;
                 }
+
             }
+           // }
         }
     }
 
@@ -1185,6 +1189,7 @@ public final class HeliGameMain extends JFrame {
                     playPauseButton.setIcon(playIcon);
                     playPauseButton.setEnabled(true);
                     stopButton.setEnabled(false);
+                    helpMenu.setVisible(true);
                 }
             });
 
@@ -1309,7 +1314,7 @@ public final class HeliGameMain extends JFrame {
     /**
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) {        
             SwingUtilities.invokeLater(new Runnable(){
                     @Override
                     public void run() {

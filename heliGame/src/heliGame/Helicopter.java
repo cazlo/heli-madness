@@ -22,6 +22,10 @@ public class Helicopter extends Sprite{
 
     static final int HELI_WIDTH = 55;
     static final int HELI_HEIGHT = 43;
+    static final int TOP_OFFSET = 10;//how much of the image is empty at the top
+                                     //in order to see the whole helicopter when
+                                     //it is rotated
+    static final int BOTTOM_OFFSET = 8;//how much room the landing skids take up
 
     public static enum ThrottleStates{//the state of the throttle which effects the amount of lift produced by the engine
         //IDLE means the blades are not moving; the engine for the heli is off
@@ -250,6 +254,15 @@ public class Helicopter extends Sprite{
     public void generateCollisionShape() {
             this.setCollisionShape(new Rectangle(this.getX(),this.getY() + 10,HELI_WIDTH,HELI_HEIGHT - 10));
     }
+    
+    //returns a Rectangle2D representation of a slightly smaller collision box
+    //relative to the canvas (game screen)
+    public Rectangle getCanvasCollisionBox(){
+        return( new Rectangle(this.getCanvasX(),
+                              this.getY() + TOP_OFFSET,
+                              HELI_WIDTH,
+                              HELI_HEIGHT-(TOP_OFFSET + BOTTOM_OFFSET)));//dont include the landing skids
+    } 
 
     //-------method to update the y of the heli, and x relative to level for heli----------------
     public void updateHeli() {
@@ -319,7 +332,12 @@ public class Helicopter extends Sprite{
         }
 
         this.updateSprite();//updates the x relative to the level for the heli
-        this.generateCollisionShape();//re-generate collision shape at the new position
+        //this.generateCollisionShape();//re-generate collision shape at the new position
+        this.getCollisionRectangle2D().setRect(this.getX(),
+                                               this.getY(),
+                                               HELI_WIDTH,
+                                               HELI_HEIGHT);
+        //move its collision shape to the new position
     }
 
     //-----------------game logic rules--------------------

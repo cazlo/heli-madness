@@ -70,17 +70,9 @@ public class Level {
                     //randomly generate birds
                     Random numGenerator = new Random();
                     for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
-                        birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength),
+                        birds [birdIndex] = new Bird(numGenerator.nextInt(HeliGameMain.GAME_WIDTH) + HeliGameMain.GAME_WIDTH,//draw it off screen initially
                                                      numGenerator.nextInt(Bird.MIN_ALTITUDE));//, true);
-                        //check to see if the bird is within a 200 pixels horizontally or vertically if the heli
-                        //if it is, re-generate it
-                        while (birds[birdIndex].intersects(new Rectangle(this.startX - 200,
-                                                                         this.startY - 200,
-                                                                         400 + Helicopter.HELI_WIDTH,
-                                                                         400 + Helicopter.HELI_HEIGHT))){
-                            birds [birdIndex] = new Bird(numGenerator.nextInt(this.levelLength),
-                                                         numGenerator.nextInt(Bird.MIN_ALTITUDE));//, true);
-                        }
+                        
                     }
                     this.maxScore = this.ringList.size() * Ring.RING_VALUE;
                     
@@ -350,14 +342,14 @@ public class Level {
 		
 		//----------------------draw visible birds--------------
 		for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
-                    if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
-                        (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
-                            birds[birdIndex].setCanvasX( birds[birdIndex].getX() - this.currentX );//set the x to draw the bird on the canvas
+                    //if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
+                    //    (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
+                    //        birds[birdIndex].setCanvasX( birds[birdIndex].getX() - this.currentX );//set the x to draw the bird on the canvas
                             birds[birdIndex].drawSprite(g);
-                    }
-                    else{
-                            //dont draw the bird
-                    }
+                   //}
+                    //else{
+                    //        //dont draw the bird
+                    //}
 		}
 		
 		//-----------------draw visible rings------------------
@@ -394,40 +386,13 @@ public class Level {
             //-----------process each bird 1 at a time--------------------
             for (int birdIndex = 0; birdIndex < Bird.MAX_BIRDS; birdIndex++){
                 //-----------------check to see if bird is going into ground-----------------
-                while(ground.containsPoint(birds[birdIndex].getX(),
+                while(ground.containsPoint(birds[birdIndex].getX() + this.currentX,
                                            birds[birdIndex].getY() + Bird.BIRD_HEIGHT - 1)){
                     birds[birdIndex].setY(birds[birdIndex].getY() - 4);
                     
                 }
-
-                //-------------check to see if it drifted off the screen--------
-                if (birds[birdIndex].getX() < (0 - Bird.BIRD_WIDTH)){//it drifted off the screen
-                    
-                    if ((birds[birdIndex].getInitialX() < this.currentX - Bird.BIRD_WIDTH) ||
-                        (birds[birdIndex].getInitialX() > this.currentX  + HeliGameMain.GAME_WIDTH)){
-                        //its initial x position is not visible
-                        //so set it to its initial x.
-                        //this avoids birds popping out of nowhere
-                        birds[birdIndex].setX(birds[birdIndex].getInitialX());
-                    }
-                    else{
-                        //put it back at the end of the level
-                        birds[birdIndex].setX(this.levelLength);
-                        //also set its inital x as this so that the end is more
-                        //populated with birds
-                        birds[birdIndex].setInitialX(this.levelLength);
-                    }
-                    
-                    birds[birdIndex].setY(birds[birdIndex].getInitialY());
-                }
-                //else{//update it as normal
-                birds[birdIndex].updateBird();
                 
-                if ((birds[birdIndex].getX()>= (this.currentX - Bird.BIRD_WIDTH)) &&
-                    (birds[birdIndex].getX()<= (this.currentX + HeliGameMain.GAME_WIDTH))){
-                    //if it is visible update its animation
-                    birds[birdIndex].updateBirdAnimation();
-                }
+                birds[birdIndex].updateBird(this.xSpeed);
             }
 	}
 

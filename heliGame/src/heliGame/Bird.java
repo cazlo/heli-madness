@@ -16,12 +16,12 @@ public class Bird extends Sprite {
 	static final int BIRD_WIDTH = 20;
 	static final int BIRD_HEIGHT = 20;
 	static final int MAX_SPEED = 4;
-        static final int MAX_BIRDS_NORMAL = 35;
-        static final int MAX_BIRDS_DEBUG = 15;
+        //static final int MAX_BIRDS_NORMAL = 35;
+        //static final int MAX_BIRDS_DEBUG = 15;
 	
-	static int MAX_BIRDS = MAX_BIRDS_NORMAL;
+	static int MAX_BIRDS = 20;
 	//---------variables------------
-	private int canvasX;
+	//private int canvasX;
 	private int initialY, initialX;
 	
 	//----------------------------stuff for animation-------------------------------
@@ -36,7 +36,7 @@ public class Bird extends Sprite {
                 super(xIn,yIn);
                 
                 Random rng = new Random();//for random speed and frame of animation
-                
+               /*
                 if(HeliGameMain.DEBUG){
                         Bird.MAX_BIRDS = MAX_BIRDS_DEBUG;
                         //birdAnimDelay = MAX_BIRDS * 10;
@@ -44,7 +44,7 @@ public class Bird extends Sprite {
                 else{
                         Bird.MAX_BIRDS = MAX_BIRDS_NORMAL;
                         //birdAnimDelay = MAX_BIRDS * 10;
-                }
+                }*/
                 
 		//if (initAnimation){
 		birdAnim = new AnimationUtils(birdAnimImageNumbers.length,
@@ -61,14 +61,14 @@ public class Bird extends Sprite {
                 this.setInitialX(xIn);
 		this.generateCollisionShape();
 	}
-	
+	/*
 	//-----------------getters and setters--------------
 	public int getCanvasX(){
 		return canvasX;
 	}
 	public void setCanvasX(int canvasXIn){
 		canvasX = canvasXIn;
-	}
+	}*/
 	
 	public int getInitialY() {
 		return initialY;
@@ -99,33 +99,47 @@ public class Bird extends Sprite {
 
 	@Override
 	public void generateCollisionShape() {
-		this.setCollisionShape(new Rectangle(this.getX(),this.getY(),BIRD_WIDTH,BIRD_HEIGHT));
+		this.setCollisionShape(new Rectangle(this.getX(),this.getY(),BIRD_WIDTH-3,BIRD_HEIGHT-3));
 	}
 
 	
-	public void updateBird(){
-		//this.setX(this.getX() + this.getXSpeed());
-		updateSprite();
-		//this.birdAnim.updateImageAnimation();
-		//generateCollisionShape();//re-generate a new shape at its new location
-		this.getCollisionRectangle2D().setRect(this.getX(),this.getY(),BIRD_WIDTH,BIRD_HEIGHT);
+	public void updateBird(int levelSpeed){
+            this.setX(this.getX() + this.getXSpeed() - levelSpeed);
+            
+            //-------------check to see if it drifted off the screen--------
+            if (this.getX() < (0 - Bird.BIRD_WIDTH)){//it drifted off the screen
+
+                this.setX(this.getInitialX());
+                this.setY(this.getInitialY());
+            }
+            else if (this.getX() > (HeliGameMain.GAME_WIDTH * 2)){//if the heli is outrunning them
+                this.setX(0 - Bird.BIRD_WIDTH + 1);
+            }
+            if(this.getX() <= HeliGameMain.GAME_WIDTH){//update its animation if it is visible
+                updateBirdAnimation();
+            }
+            //generateCollisionShape();//re-generate a new shape at its new location
+            this.getCollisionRectangle2D().setRect(this.getX(),this.getY(),BIRD_WIDTH,BIRD_HEIGHT);
 	}
         
-        public void updateBirdAnimation(){
+        private void updateBirdAnimation(){
             this.birdAnim.updateImageAnimation();
         }
 
 	//---------------------drawing stuff----------------------
 	@Override
 	public void drawSprite(Graphics g) {
+            if(this.getX() <= HeliGameMain.GAME_WIDTH){//only draw it if it is visible
 		if(birdAnim.getCurrentFrame() == null){//no image for sprite
-			g.setColor(Color.RED);
-			g.fillRect(this.canvasX, this.getY(), BIRD_WIDTH, BIRD_HEIGHT);//draw a rectangle the size of the sprite
+                    g.setColor(Color.RED);
+                    //g.fillRect(this.canvasX, this.getY(), BIRD_WIDTH, BIRD_HEIGHT);//draw a rectangle the size of the sprite
+                    g.fillRect(this.getX(), this.getY(), BIRD_WIDTH, BIRD_HEIGHT);//draw a rectangle the size of the sprite
 		}
 		else{
-			//this.getSpriteImage().paintIcon(null, g, this.canvasX, this.getY());
-			g.drawImage(birdAnim.getCurrentFrame(), canvasX, this.getY(), null);
+                    //this.getSpriteImage().paintIcon(null, g, this.canvasX, this.getY());
+                    g.drawImage(birdAnim.getCurrentFrame(), this.getX(), this.getY(), null);
 		}
+            }
 	}
 
 }
