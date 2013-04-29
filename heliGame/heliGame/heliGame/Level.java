@@ -142,6 +142,10 @@ public class Level {
             try{
                 URL levelURL = HeliGameMain.class.getResource(LEVEL_DIR+"level"+levelNumber+".level");
                 //FileInputStream inStream = new FileInputStream(LEVEL_DIR+"level"+levelNumber+".level");
+                if (levelURL == null){
+                    System.out.println("ERROR: Level File \'"+LEVEL_DIR+"level"+levelNumber+".level\' not found");
+                    throw new IOException();
+                }
                 BufferedReader fileIn = new BufferedReader(new InputStreamReader(levelURL.openStream()));
                 parseLevelFile(fileIn);//only gets executed if file opens okay 
                 fileIn.close();
