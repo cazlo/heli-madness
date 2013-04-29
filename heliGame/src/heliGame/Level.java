@@ -296,7 +296,6 @@ public class Level {
 			treeList.get(i).drawSprite(g);
 		}
 		
-		//put ground onto this image
                 finishLine.drawSprite(g);
 		ground.drawGround(g2);
 		

@@ -12,6 +12,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
@@ -67,22 +69,25 @@ public final class HeliGameMain extends JFrame {
     //Ground groundSprite;
 
     //define handler for panels of game
-    private GamePanel gamePanel;
+    private GameCanvas gameCanvas;
     private OptionsPanel optionsPanel;
     private InstrumentPanel instrumentPanel;
     private JPanel bottomPanel;
 
     //constructor which initializes the game's objects and UI components
     public HeliGameMain(){
+        super("Helicopter Game");
         init();
 
         //set up UI components
         //this.setContentPane(new JDesktopPane());
         Container contentPane = this.getContentPane();
         contentPane.setLayout(new BorderLayout() );
-        gamePanel = new GamePanel();
-        gamePanel.setPreferredSize(new Dimension(GAME_WIDTH,GAME_HEIGHT));
-        contentPane.add(gamePanel,BorderLayout.CENTER);
+        gameCanvas = new GameCanvas();
+        gameCanvas.setIgnoreRepaint(true);
+        
+        //gamePanel.setPreferredSize(new Dimension(GAME_WIDTH,GAME_HEIGHT));
+        contentPane.add(gameCanvas,BorderLayout.CENTER);
 
         bottomPanel = new JPanel(new FlowLayout());
         optionsPanel = new OptionsPanel();
@@ -92,13 +97,15 @@ public final class HeliGameMain extends JFrame {
         bottomPanel.add(optionsPanel);		
         contentPane.add(bottomPanel, BorderLayout.SOUTH);
 
-        this.setTitle("Helicopter Game");
+        //this.setTitle("Helicopter Game");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setResizable(false);
 
         this.pack();
         this.setVisible(true);
 
+        gameCanvas.setUpBuffer();
+       
         helpMenu = new HelpMenu();
         helpMenu.setLocationRelativeTo(this);
 
@@ -199,13 +206,17 @@ public final class HeliGameMain extends JFrame {
                             gameState = GameStates.PLAYING;
                         }
                     }
-                    repaint();//refresh the frame; re-calls the paintComponent methods of each panel in the main frame
+                    gameCanvas.draw();
+                    //repaint();//refresh the frame; re-calls the paintComponent methods of each panel in the main frame
             }
             //find out how long to sleep to keep the game refreshing at REFRESH_RATE
             timeTaken = System.nanoTime() - startTime;
             timeLeft = (UPDATE_PERIOD - timeTaken) / 1000000L;  // in milliseconds
-            if (timeLeft < 10){                    
-                timeLeft = 10;  //set a minimum amount of time to sleep
+            if (timeLeft < 0){                    
+                timeLeft = 0;  //set a minimum amount of time to sleep
+                if (DEBUG){
+                    System.out.println("Lagging");
+                }
             }
             try{
                 Thread.sleep(timeLeft);//let other threads do thier stuff (like input thread)
@@ -949,21 +960,63 @@ public final class HeliGameMain extends JFrame {
     //-----setup as inner classes to make accessing instances of game objects easier----------
 
     //the panel for which the game itself will be drawn on 
-    private class GamePanel extends JPanel implements KeyListener {
+    private class GameCanvas extends Canvas implements KeyListener {
 
+        BufferStrategy buffer;
+        BufferedImage offImage;
+        Graphics gOff, gOn;//on and off screen graphics
             //constructor
-            public GamePanel(){
+            public GameCanvas(){
                 setFocusable(true); //add ability to get key events
                 requestFocus();
                 addKeyListener(this);
+                setSize(GAME_WIDTH, GAME_HEIGHT);
+                gOff = null;
+                gOn = null;
+                //createBufferStrategy(2);//double buffering
+                //buffer = getBufferStrategy();
+                //offImage = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(GAME_WIDTH, GAME_HEIGHT);
             }
-            @Override
-            public void paintComponent(Graphics g){//called when frame refreshes with repaint();
-                super.paintComponent(g); //put component onto panel
-                setBackground(Color.BLUE); 
-                drawGame(g);
+            //@Override
+           // public void paintComponent(Graphics g){//called when frame refreshes with repaint();
+             //   super.paintComponent(g); //put component onto panel
+            //    setBackground(Color.BLUE); 
+            //    drawGame(g);
+            //}
+            
+            public void setUpBuffer() {
+                createBufferStrategy(2);//double buffering
+                buffer = gameCanvas.getBufferStrategy();
+                offImage = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(GAME_WIDTH, GAME_HEIGHT);
             }
-
+            
+            public void draw(){
+                renderCanvas();
+                drawCanvas();
+            }
+            
+            private void drawCanvas(){
+                gOn = buffer.getDrawGraphics();
+                gOn.drawImage(offImage, 0, 0, null);
+                if (!buffer.contentsLost()){
+                    buffer.show();
+                }
+                if (gOn != null){
+                    gOn.dispose();
+                }
+                if (gOff != null){
+                    gOff.dispose();
+                }
+            }
+            
+            private void renderCanvas(){
+                //clear back buffer
+                gOff = offImage.createGraphics();
+                gOff.setColor(Color.BLUE);
+                gOff.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+                drawGame(gOff);
+            }
+            
             @Override
             public void keyPressed(KeyEvent e) {//process key press
 
@@ -1043,6 +1096,8 @@ public final class HeliGameMain extends JFrame {
                     // TODO Auto-generated method stub
 
             }
+
+        
 
     }
 
@@ -1175,7 +1230,7 @@ public final class HeliGameMain extends JFrame {
                            playPauseButton.setIcon(pauseIcon);
                    }
                    stopButton.setEnabled(true);
-                   gamePanel.requestFocus();
+                   gameCanvas.requestFocus();
                 }
             });
 
@@ -1282,7 +1337,7 @@ public final class HeliGameMain extends JFrame {
                         gameState = GameStates.PLAYING;
                     }
                     optionsPanel.updatePlayPauseIcon();
-                    gamePanel.requestFocus();
+                    gameCanvas.requestFocus();
                 }
             });
             playButton.setAlignmentX(Component.CENTER_ALIGNMENT);               

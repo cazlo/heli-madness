@@ -32,6 +32,19 @@ public class AnimationUtils {
 
         loadImageFrames(baseFileName,fileNumbers, fileExtension);
     }
+    
+    AnimationUtils(int numFramesIn,
+                   int animDelay,
+                   LoopTypes loopTypeIn){//,
+                   //BufferedImage [] imageFramesReference){
+        this.numFrames = numFramesIn;
+        this.currentFrameNum = 0;
+        this.animationDelay = animDelay;
+        this.loopType = loopTypeIn;
+        this.setAnimationDone(false);
+        imageFrames = null;
+        //imageFrames = imageFramesReference;
+    }
 
     //---------------tools to load images-----------------
     private void loadImageFrames(String baseFileName,
@@ -106,7 +119,16 @@ public class AnimationUtils {
     }
 
     public BufferedImage getCurrentFrame(){
-        return imageFrames[currentFrameNum];
+        if (imageFrames == null){
+            return null;
+        }
+        else{
+            return imageFrames[currentFrameNum];
+        }
+    }
+    
+    public int getCurrentFrameIndex(){
+        return currentFrameNum;
     }
 
     public boolean animationIsDone() {
