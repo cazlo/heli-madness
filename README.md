@@ -47,7 +47,7 @@ Then there is CanvasStates, which represents the state of the helicopter in rega
 
 The helicopter itself has 2 states: a ThrottleState and a MovementState.  The throttle state represents the state of the throttle and consequently the blades.  This is used to move the helicopter up or down and to ignore bird collision when the engine is idle.  The movement state is used to keep track of which way the helicopter is facing, whether it is animated or not, and whether it is turning or not.  These are used to draw the correct image for the helicopter at any given time.
 
-###Challenges
+###Double Buffering
 Initially the game was setup to use passive rendering.
 The game canvas was set up as a Jpanel.
 The method paintComponent(Graphics g) was overridden and drawGame(Graphics g) was within this method.
