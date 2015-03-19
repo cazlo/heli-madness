@@ -51,7 +51,7 @@ public class Ground extends Sprite{
 		try {
 			//BufferedImage imageIn = new BufferedImage()
 			g2.setColor(Color.GRAY);
-			g2.setPaint(new TexturePaint(ImageIO.read(HeliGameMain.class.getResource(IMAGE_LOCATION)),
+			g2.setPaint(new TexturePaint(ImageIO.read(new File(IMAGE_LOCATION)),
                                                      new Rectangle(0,0,TEXTURE_WIDTH,TEXTURE_HEIGHT)));
 			
 		} catch (IIOException e) {

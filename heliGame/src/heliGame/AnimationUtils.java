@@ -59,7 +59,7 @@ public class AnimationUtils {
     private BufferedImage loadImage(String fileName){
         BufferedImage image = null;
         try {
-            image = ImageIO.read(HeliGameMain.class.getResource(fileName));
+            image = ImageIO.read(new File(fileName));
         }
         catch(IOException e) {
             System.out.println("ERROR: could not load image:" + fileName);
@@ -72,7 +72,7 @@ public class AnimationUtils {
     public static BufferedImage staticLoadImage(String fileName){
         BufferedImage image = null;
         try {
-            image = ImageIO.read(HeliGameMain.class.getResource(fileName));
+            image = ImageIO.read(new File(fileName));
         }
         catch(IOException e) {
             System.out.println("ERROR: could not load image:" + fileName);

@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -139,32 +138,26 @@ public class Level {
 	//-------------------------------tools to parse the level files-----------------------
 	
 	public boolean loadedLevel(){
-            try{
-                URL levelURL = HeliGameMain.class.getResource(LEVEL_DIR+"level"+levelNumber+".level");
-                //FileInputStream inStream = new FileInputStream(LEVEL_DIR+"level"+levelNumber+".level");
-                if (levelURL == null){
-                    System.out.println("ERROR: Level File \'"+LEVEL_DIR+"level"+levelNumber+".level\' not found");
-                    throw new IOException();
-                }
-                BufferedReader fileIn = new BufferedReader(new InputStreamReader(levelURL.openStream()));
-                parseLevelFile(fileIn);//only gets executed if file opens okay 
-                fileIn.close();
-            }
-            catch(FileNotFoundException e){
-                System.out.println("ERROR: Level File \'"+LEVEL_DIR+"level"+levelNumber+".level\' not found");
-                return false;
-            } 
-            catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-            return true;
+		try{
+			FileInputStream inStream = new FileInputStream(LEVEL_DIR+"level"+levelNumber+".level");
+			parseLevelFile(inStream);//only gets executed if file opens okay 
+			inStream.close();
+		}
+		catch(FileNotFoundException e){
+			System.out.println("ERROR: Level File \'"+LEVEL_DIR+"level"+levelNumber+".level\' not found");
+			return false;
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 	
-	private void parseLevelFile(BufferedReader fileIn){
+	private void parseLevelFile(FileInputStream inStream){
 		String lineIn = "";
 		
-		//BufferedReader fileIn = new BufferedReader(new InputStreamReader(inStream));
+		BufferedReader fileIn = new BufferedReader(new InputStreamReader(inStream));
 		try{
 			do{
 				lineIn = fileIn.readLine();

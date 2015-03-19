@@ -22,7 +22,7 @@ public final class HeliGameMain extends JFrame {
     /**
      * 
      */
-    static final boolean DEBUG = false;//TODO: CHANGE THIS BEFORE TURNING IT IN
+    static final boolean DEBUG = true;//TODO: CHANGE THIS BEFORE TURNING IT IN
 
     //define constants for the game
     static final int GAME_WIDTH = 1200; //width of game window
@@ -161,11 +161,9 @@ public final class HeliGameMain extends JFrame {
 
     private void loop(){
         long startTime, timeTaken, timeLeft;
-        
-        gameCanvas.draw();
+
 
         if (gameState == GameStates.INITIALIZED) {
-            
             gameState = GameStates.PLAYING;
         }
         else if (gameState == GameStates.GAMEOVER || 
@@ -208,7 +206,6 @@ public final class HeliGameMain extends JFrame {
                             gameState = GameStates.PLAYING;
                         }
                     }
-                    
                     gameCanvas.draw();
                     //repaint();//refresh the frame; re-calls the paintComponent methods of each panel in the main frame
             }
@@ -1107,8 +1104,10 @@ public final class HeliGameMain extends JFrame {
     //the panel with instruments indicating the heli's stats
     private class InstrumentPanel extends JPanel {
             //private JLabel vertSpeedLbl;
-            private JProgressBar vertSpeedBar, horzSpeedBar, throttleBar;
-            //private JLabel throttleLbl;
+            private JProgressBar vertSpeedBar;
+            //private JLabel horzSpeedLbl;
+            private JProgressBar horzSpeedBar;
+            private JLabel throttleLbl;
             private JLabel heliPosDebug;
             private JLabel levelDebug;
             private JLabel scoreLbl;
@@ -1122,8 +1121,8 @@ public final class HeliGameMain extends JFrame {
                 horzSpeedBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, Helicopter.MAX_X_SPEED);
                 horzSpeedBar.setValue(0);
                 horzSpeedBar.setStringPainted(true);
-                //throttleLbl = new JLabel("");
-                throttleBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, 2 + Helicopter.MAX_Y_SPEED);
+
+                throttleLbl = new JLabel("");
                 heliPosDebug = new JLabel("");
                 levelDebug = new JLabel("");
                 scoreLbl = new JLabel("");
@@ -1133,8 +1132,7 @@ public final class HeliGameMain extends JFrame {
                 this.add(vertSpeedBar);
                 //this.add(horzSpeedLbl);//placeholder for horiz. speed graphic
                 this.add(horzSpeedBar);
-                //this.add(throttleLbl);//placeholder for throttle graphic
-                this.add(throttleBar);
+                this.add(throttleLbl);//placeholder for throttle graphic
                 if (DEBUG){
                     this.add(heliPosDebug);                    
                     this.add(levelDebug);                       
@@ -1160,20 +1158,16 @@ public final class HeliGameMain extends JFrame {
                 horzSpeedBar.setString(""+heli.getXSpeed());
                 switch (heli.getThrottleStatus()){
                     case IDLE:
-                        //throttleLbl.setText("IDLE");
-                        throttleBar.setValue(0);
+                        throttleLbl.setText("IDLE");
                         break;
                     case NO_LIFT:
-                        //throttleLbl.setText("NO_LIFT");
-                        throttleBar.setValue(1);
+                        throttleLbl.setText("NO_LIFT");
                         break;
                     case HOVER:
-                        //throttleLbl.setText("HOVER");
-                        throttleBar.setValue(2);
+                        throttleLbl.setText("HOVER");
                         break;
                     case LIFT:
-                        //throttleLbl.setText("LIFT");
-                        throttleBar.setValue(2 + heli.getYSpeed());
+                        throttleLbl.setText("LIFT");
                         break;
                 }
 
